@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingBag, Star, Plus, Check } from 'lucide-react';
 import { Product } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -44,7 +45,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="relative aspect-square bg-[#F2EDE4] overflow-hidden">
         {!imageError ? (
           <img
-            src={product.image}
+            src={getAssetUrl(product.image)}
             alt={product.name}
             onError={() => setImageError(true)}
             referrerPolicy="no-referrer"

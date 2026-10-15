@@ -29,6 +29,7 @@ import {
 } from '../utils/beninPhone';
 import { formatFCFA } from '../utils/formatCurrency';
 import { BENIN_CITIES } from '../utils/beninLocations';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface CheckoutPageProps {
   primaryProduct?: Product | null;
@@ -281,7 +282,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <div key={idx} className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={it.productImage}
+                      src={getAssetUrl(it.productImage)}
                       alt={it.productName}
                       className="w-11 h-11 object-cover rounded-xl border border-[#E3DACD] shrink-0"
                     />
@@ -630,7 +631,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
             {primaryProduct ? (
               <div className="flex gap-3.5 items-start">
                 <img
-                  src={primaryProduct.image}
+                  src={getAssetUrl(primaryProduct.image)}
                   alt={primaryProduct.name}
                   referrerPolicy="no-referrer"
                   className="w-16 h-16 object-cover rounded-2xl border border-[#EAE3D6] shrink-0"
@@ -681,7 +682,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <div key={item.product.id} className="flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <img
-                        src={item.product.image}
+                        src={getAssetUrl(item.product.image)}
                         alt={item.product.name}
                         className="w-10 h-10 object-cover rounded-xl border border-[#EAE3D6] shrink-0"
                       />

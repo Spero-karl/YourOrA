@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import { CartItem } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     className="flex items-center gap-3 bg-[#FCFAF7] border border-[#ECE3D5] p-3 rounded-2xl"
                   >
                     <img
-                      src={item.product.image}
+                      src={getAssetUrl(item.product.image)}
                       alt={item.product.name}
                       className="w-14 h-14 object-cover rounded-xl border border-[#E3D7C7] shrink-0"
                     />

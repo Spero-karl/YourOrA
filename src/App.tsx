@@ -20,6 +20,7 @@ import { Toast } from './components/Toast';
 import { PRODUCTS } from './data/products';
 import { Product, CartItem, UserProfile, Order, SavedMobileMoney, ChatMessage, DeliveryAgent, DeliveryNotification } from './types';
 import { formatFCFA } from './utils/formatCurrency';
+import { getAssetUrl } from './utils/imageUtils';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import { getSavedDeliveryNotifications, saveDeliveryNotifications, playDeliveryChime, showSystemNotification } from './utils/deliveryNotifications';
 import { WifiOff, Eye, ArrowLeft } from 'lucide-react';
@@ -107,7 +108,16 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('ora_products');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: Product[] = JSON.parse(saved);
+        // Ensure image paths are updated to valid relative / clean paths
+        return parsed.map((p) => {
+          if (p.image?.startsWith('/src/assets/images/')) {
+            return { ...p, image: p.image.replace('/src/assets/images/', '/images/') };
+          }
+          return p;
+        });
+      }
       // Initialize first 3 as featured in hero
       return PRODUCTS.map((p, idx) => ({
         ...p,

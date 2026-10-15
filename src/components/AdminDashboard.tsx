@@ -32,6 +32,7 @@ import {
 import { Order, DeliveryAgent, Product, UserProfile, OrderStatus, ChatMessage } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
 import { syncDeliveryAgentToSecureAccount } from '../utils/securityAuth';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface AdminDashboardProps {
   products: Product[];
@@ -585,7 +586,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="flex items-center gap-2 flex-wrap">
                             {ord.items.map((it, idx) => (
                               <div key={idx} className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                                <img src={it.productImage} alt={it.productName} className="w-5 h-5 object-cover rounded" />
+                                <img src={getAssetUrl(it.productImage)} alt={it.productName} className="w-5 h-5 object-cover rounded" />
                                 <span className="font-medium text-slate-700 text-[11px]">{it.quantity}x {it.productName}</span>
                               </div>
                             ))}
@@ -703,7 +704,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs flex flex-col justify-between hover:shadow-sm transition-all"
                 >
                   <div className="relative aspect-square bg-slate-100">
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    <img src={getAssetUrl(p.image)} alt={p.name} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => onToggleHeroFeature(p.id)}

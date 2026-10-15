@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Star, ShoppingBag, ArrowRight, ShieldCheck, Truck, RotateCcw, Plus, Check } from 'lucide-react';
 import { Product } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -50,7 +51,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             {/* Image section */}
             <div className="relative aspect-square md:aspect-auto bg-[#F2EDE4]">
               <img
-                src={product.image}
+                src={getAssetUrl(product.image)}
                 alt={product.name}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover object-center"

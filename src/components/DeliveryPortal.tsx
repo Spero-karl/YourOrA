@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Order, DeliveryAgent, DeliveryNotification } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
+import { getAssetUrl } from '../utils/imageUtils';
 import { playDeliveryChime, requestNotificationPermission } from '../utils/deliveryNotifications';
 
 interface DeliveryPortalProps {
@@ -323,7 +324,7 @@ export const DeliveryPortal: React.FC<DeliveryPortalProps> = ({
                             className="flex items-center gap-2 bg-slate-100 p-1.5 pr-3 rounded-lg border border-slate-300"
                           >
                             <img
-                              src={it.productImage}
+                              src={getAssetUrl(it.productImage)}
                               alt={it.productName}
                               className="w-7 h-7 object-cover rounded-md border border-slate-300"
                             />

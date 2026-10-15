@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight, Tag } from 'lucide-react';
 import { Product } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
+import { getAssetUrl } from '../utils/imageUtils';
 
 interface HeroCarouselProps {
   onSelectProductForCheckout: (product: Product) => void;
@@ -68,7 +69,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             }`}
           >
             <img
-              src={prod.image}
+              src={getAssetUrl(prod.image)}
               alt={prod.name}
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-center"
