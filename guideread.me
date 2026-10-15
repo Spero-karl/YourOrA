@@ -1,0 +1,191 @@
+# Guide Complet d'Utilisation — Maison OrA (guideread.me)
+
+Bienvenue sur le guide de référence de la plateforme **OrA — Maison de Haute Horlogerie & Parfumerie d'Exception**.
+Ce document détaille le fonctionnement complet de l'application pour les visiteurs, les clients et les administrateurs.
+
+---
+
+## Sommaire
+1. [Vue d'ensemble & Philosophie](#1-vue-densemble--philosophie)
+2. [Parcours Invité & Authentification Obligatoire](#2-parcours-invité--authentification-obligatoire)
+3. [Espace Administrateur Secret (`AD-...`)](#3-espace-administrateur-secret-ad-)
+4. [Gestion du Catalogue & Import de Photos](#4-gestion-du-catalogue--import-de-photos)
+5. [Contrôle de la Bannière Défilante (Hero Carousel)](#5-contrôle-de-la-bannière-défilante-hero-carousel)
+6. [Gestion Cloisonnée des Comptes Clients & Commandes](#6-gestion-cloisonnée-des-comptes-clients--commandes)
+7. [Assistance Personnalisée & Règle des 24h](#7-assistance-personnalisée--règle-des-24h)
+8. [Moyens de Paiement Disponibles (4 Méthodes)](#8-moyens-de-paiement-disponibles-4-méthodes)
+9. [Mode Hors-Ligne & Installation PWA](#9-mode-hors-ligne--installation-pwa)
+
+---
+
+## 1. Vue d'ensemble & Philosophie
+La maison **OrA** propose une sélection de pièces d'horlogerie de précision suisse et d'extraits de haute parfumerie.
+L'interface a été conçue selon des principes stricts :
+- **Clarté totale** : Pas de fiches techniques superflues ou encombrantes, l'essentiel est accessible immédiatement.
+- **Affichage mobile optimisé** : Présentation stricte de 2 articles par ligne sur smartphone.
+- **Navigation ultra-rapide** : Panier simple (« Mon panier ») et règlement en quelques secondes.
+
+---
+
+## 2. Parcours Invité & Authentification Obligatoire
+
+### Arrivée en mode Invité
+- Tout nouvel arrivant accède au site sous le statut **Invité**.
+- L'invité peut parcourir l'ensemble du catalogue, filtrer par univers (Montres, Parfums, Promotions), effectuer des recherches et ajouter des pièces à son panier.
+
+### Déclenchement de l'authentification
+- **Pour payer, l'authentification est obligatoire** :
+  - Dès que l'invité clique sur **« Commander »** (depuis une carte produit ou depuis « Mon panier »), la fenêtre d'authentification s'ouvre automatiquement.
+  - L'interface de connexion est standard, sobre et élégante (aucune mention technique n'est affichée).
+  - Dès que le client se connecte ou valide son inscription, il est **immédiatement redirigé vers sa page de règlement** pour finaliser son achat sans friction.
+
+---
+
+## 3. Espace Administrateur Secret (`AD-...`)
+
+### Procédure de connexion Administrateur
+Conformément à la consigne de discrétion, la page de connexion ne divulgue aucun indice public sur l'existence des administrateurs. Seules les personnes formées connaissent la règle :
+
+1. Cliquez sur l'icône de connexion en haut à gauche.
+2. Dans le champ **Identifiant ou Adresse email**, saisissez un identifiant préfixé par **`AD-`** (insensible à la casse) :
+   - Exemples valides : `AD-admin`, `AD-directeur`, `AD-karl@ora.luxury`.
+3. Saisissez n'importe quel mot de passe et validez.
+
+### Accès direct à la Console (Page Entière Dédiée)
+- Dès la validation d'un identifiant commençant par `AD-`, **l'application bascule immédiatement sur la Console Administrateur en page entière** (et non un simple onglet ou popup au-dessus de l'accueil).
+- Cette page dédiée plein écran comprend sa propre barre supérieure, ses indicateurs financiers en direct, et son grand espace de travail ergonomique.
+
+### Option « Aperçu Vue Client »
+- Dans la barre supérieure de la console admin, le bouton doré **« 👁️ Aperçu Vue Client »** permet de basculer vers la boutique pour visualiser le catalogue tel que les clients le découvrent.
+- Un bandeau supérieur reste affiché permettant de **revenir en un clic à la Console Admin plein écran** à tout moment.
+
+---
+
+## 4. Gestion du Catalogue & Import de Photos
+
+Depuis l'onglet **« Catalogue & Bannière Défilante »** de la console admin :
+- **Création d'articles** : Cliquez sur *« Créer un article »*.
+- **Importation de photos depuis l'appareil** :
+  - Vous pouvez sélectionner et téléverser n'importe quelle photo stockée sur votre téléphone portable, tablette ou ordinateur grâce au bouton dédié **« Importer une photo depuis l'appareil »**.
+  - L'image est instantanément encodée et prévisualisée.
+  - Vous pouvez également continuer à saisir un chemin ou une URL si désiré.
+- **Modification en temps réel** : Modifiez le prix, le titre, la description, l'état du stock ou activez une promotion.
+- **Suppression** : Retirez les pièces épuisées ou retirées de la vente.
+- *Tous les changements sont sauvegardés et se répercutent instantanément sur le catalogue public.*
+
+---
+
+## 5. Contrôle de la Bannière Défilante (Hero Carousel)
+
+- L'administrateur choisit précisément **les articles qui défilent dans la bannière supérieure** du site.
+- Dans la liste des articles de la console admin, chaque produit dispose d'un bouton étoile **« ★ Bannière défilante »** :
+  - Cliquez dessus pour l'ajouter à la bannière d'accueil.
+  - Cliquez à nouveau pour le retirer.
+- Le Hero Carousel met automatiquement en avant les articles sélectionnés par l'administrateur.
+
+---
+
+## 6. Gestion Cloisonnée des Comptes Clients & Commandes
+
+Pour une organisation rigoureuse, **les commandes ne sont jamais mélangées** :
+- Dans l'onglet **« Comptes Clients & Commandes »**, chaque client possède sa fiche distincte avec son identifiant unique (`ID Client`).
+- Pour chaque compte client, l'administrateur visualise :
+  - Son identité, son adresse e-mail, son numéro de téléphone et son adresse de livraison.
+  - La liste exacte de **ses commandes spécifiques** (produits, quantités, date, prix, moyen de paiement utilisé).
+  - Le montant total cumulé dépensé par ce client.
+- **Mise à jour des livraisons** : L'administrateur peut modifier le statut de chaque commande :
+  `Confirmée` ➔ `En préparation` ➔ `Expédiée` ➔ `Livrée`.
+
+---
+
+## 7. Assistance Personnalisée & Règle des 24h
+
+### Déclenchement ciblé
+L'assistance n'est pas intrusive et respecte le parcours d'achat :
+- **Avant le paiement** : Pendant la simple consultation du catalogue en mode invité, le widget d'assistance reste discret / masqué.
+- **Dès le paiement** : Dès que le client entame le processus de règlement (sur la page de commande), l'assistance en direct **s'active immédiatement** pour l'accompagner en cas de question sur son paiement ou sa livraison.
+- **Règle des 24h post-commande** : Une fois la commande passée, le support d'assistance reste garanti et actif pendant **24 heures** pour ce client, avec affichage du compte à rebours horaire.
+
+### Gestion par l'Administrateur
+- L'administrateur peut interagir individuellement avec chaque client en fonction de ses commandes passées.
+- Dans la discussion, l'administrateur peut **ajuster la durée d'assistance** (ex : prolonger à 48h ou plus) selon le cas particulier du client.
+
+---
+
+## 8. Passerelle FedaPay, Séquestre (Escrow) & Moyens de Paiement Bénin (FCFA)
+
+Les règlements s'effectuent en **Francs CFA (FCFA)** via la passerelle officielle **FedaPay Bénin** par Mobile Money :
+1. **MTN Bénin (`MTN MoMo`)**
+2. **Moov Africa Bénin (`Moov Money`)**
+3. **Celtiis Bénin (`Celtiis Cash`)**
+
+- **Montant facture = Montant prélevé** : Le montant de la facture correspond exactement à ce qui est prélevé du compte Mobile Money du client, sans frais cachés ni conversion.
+- **Confirmation obligatoire côté client** : Le client valide interactivement la transaction. En cas de refus, aucun prélèvement n'est effectué.
+- **Sécurisation par Séquestre (Escrow)** :
+  - Dès le paiement validé, les fonds sont placés sous **séquestre bloqué** (`held`).
+  - L'argent n'est pas encore versé au vendeur : il est garanti et sécurisé jusqu'à la remise physique du colis.
+- **Code Secret Unique de Remise (`LIV-XXXX`)** :
+  - Un code OTP confidentiel unique est généré pour le client après son paiement.
+  - Ce code constitue la **preuve irréfutable de son engagement** et les conditions de remise en main propre.
+  - Le client garde ce code secret et ne le communique au livreur qu'au moment où il a vérifié et réceptionné son colis.
+
+---
+
+## 9. Flotte Livreurs & Portail Dédié (`Portail Livreur OrA`)
+
+Pour professionnaliser les livraisons et créer des opportunités d'emploi, un **Espace Livreur dédié** est intégré :
+- **Comptes Livreurs dédiés** : Marc Dossou (Cotonou), Roland Houessou (Abomey-Calavi), Aurel Tossou (Akpakpa & Porto-Novo), etc.
+- **Accès rapide au Portail** : Accessible directement depuis le bouton « Espace Livreur » dans l'en-tête, la fenêtre de connexion, ou depuis la console Administrateur.
+- **Tournée & Colis assignés** : Le livreur consulte les colis qui lui sont affectés dans sa zone d'intervention, avec l'adresse précise, le quartier et le **repère béninois** (ex. « En face de la pharmacie, portail vert ») et un bouton d'appel direct vers le client.
+- **Validation de la Remise & Déblocage des Fonds** :
+  - Le livreur demande le code unique communiqué par le client (`LIV-XXXX`) et le saisit dans son portail.
+  - Si le code correspond, la livraison est validée (`Livrée`), et les fonds sous séquestre sont **immédiatement débloqués au profit du vendeur** (`released`).
+- **Gestion des Échecs & Refus Colis (Litiges)** :
+  - Si le client refuse le colis (non-conformité, changement d'avis) ou est injoignable, le livreur clique sur **« Signaler un problème »**.
+  - La commande bascule instantanément en **Litige** (`Litige`), et les fonds restent **strictement bloqués sous séquestre**.
+  - L'argent n'est jamais débloqué automatiquement en cas d'anomalie.
+
+---
+
+## 10. Suivi Financier & Arbitrage des Litiges (Console Admin)
+
+Le tableau de bord administrateur propose une vision financière en 4 volets :
+1. **Volume Global Traité** : Total des transactions enregistrées.
+2. **Argent en Séquestre (En Attente)** : Sommes bloquées correspondant aux commandes confirmées, en préparation ou en cours de livraison.
+3. **Argent Débloqué (Encaissé)** : Sommes dont la livraison a été certifiée par le code de remise du client.
+4. **Litiges & Remboursements** : Commandes nécessitant arbitrage.
+- **Affectation des livreurs** : L'administrateur attribue chaque commande au livreur opérant dans la zone correspondante.
+- **Arbitrage d'un litige** : L'administrateur peut arbitrer en 1 clic :
+  - Soit *« Débloquer au vendeur »* si la livraison a finalement été conclue.
+  - Soit *« Rembourser le client »* pour déclencher le remboursement FedaPay vers son Mobile Money.
+- **Historique d'audit (Audit Trail)** : Chaque action (paiement, séquestre, affectation, saisie du code, arbitrage) est tracée et horodatée avec l'auteur de l'action.
+
+---
+
+## 11. Architecture Technique : Base de Données & Prestataire Séquestre
+
+### État actuel de la persistance
+- **Stockage actuel** : Les données (produits, commandes, clients, livreurs, historiques) sont actuellement persistées dans le `localStorage` du navigateur.
+- **Transition vers la production** :
+  - Pour que des clients et des livreurs distincts interagissent sur des smartphones différents en temps réel, le système doit être connecté à une base de données cloud centralisée (telle que **Firebase Cloud Firestore** ou **Cloud SQL PostgreSQL**).
+  - Cela permet la synchronisation temps réel des statuts de livraison entre le téléphone du client, celui du livreur et la console du gérant.
+
+### Prestataire de sécurisation des fonds (Séquestre au Bénin / UEMOA)
+1. **FedaPay (Recommandé au Bénin)** :
+   - FedaPay propose l'intégration Mobile Money (MTN MoMo, Moov Money, Celtiis Cash).
+   - **Mécanisme de séquestre** : FedaPay permet d'encaisser les fonds sur le compte marchand, puis d'exécuter un **Payout différé par API** (service de transfert/décaissement) vers le sous-compte du vendeur ou des livreurs uniquement lorsque le webhook de validation du code est reçu.
+2. **KKiaPay Bénin** : Propose également la collecte MTN/Moov/Celtiis et des décaissements automatisés par API (KKiaPay Payouts).
+3. **CinetPay (UEMOA)** : Gestion des transferts et paiements différés par API de reversement.
+4. **Compte séquestre bancaire conventionné (Escrow conventionné)** : Pour des volumes importants, convention de séquestre avec une banque locale (ex: BOA, Ecobank, Coris Bank) garantissant le cantonnement des fonds jusqu'à quittance de livraison.
+
+---
+
+## 12. Mode Hors-Ligne & Installation PWA
+
+- **Progressive Web App (PWA)** : Le site est installable sur écran d'accueil (Android, iOS Safari, macOS, Windows).
+- **Disponibilité hors-connexion** : Toutes les photos et les pages sont mises en cache automatique par le Service Worker (`CacheFirst`). Même sans réseau Internet, les pièces et les informations restent consultables.
+- **Indicateur de connectivité** : Un badge discret signale si l'appareil bascule en mode hors-ligne sans interrompre l'expérience.
+
+---
+
+*Guide officiel OrA — Maison de Haute Horlogerie & Parfumerie Bénin.*

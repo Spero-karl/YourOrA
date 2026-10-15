@@ -1,0 +1,14 @@
+{
+	"appId": "com.ora.luxury",
+	"appName": "OrA",
+	"webDir": "dist",
+	"bundledWebRuntime": false,
+	"server": {
+		"androidScheme": "https",
+		"cleartext": true
+	},
+	"android": {
+		"allowMixedContent": true,
+		"backgroundColor": "#1C1917"
+	}
+}

@@ -1,0 +1,6 @@
+{
+  "name": "OrA - Haute Horlogerie & Parfumerie (Android APK)",
+  "description": "Application mobile Android native (APK / Capacitor) et Web de la Maison OrA, haute horlogerie et parfumerie d'exception.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

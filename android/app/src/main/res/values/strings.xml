@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OrA</string>
+    <string name="title_activity_main">OrA</string>
+    <string name="package_name">com.ora.luxury</string>
+    <string name="custom_url_scheme">com.ora.luxury</string>
+</resources>
