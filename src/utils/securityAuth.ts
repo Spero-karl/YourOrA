@@ -24,6 +24,7 @@ export interface SecureAccount {
   failedLoginAttempts: number;
   lockedUntil?: number | null;
   sessionToken?: string;
+  isPreRegistered?: boolean;
 }
 
 export interface PasswordSecurityReport {
@@ -687,8 +688,7 @@ export async function authenticateSecureAccount(
  * Ensures ID strictly starts with LIVREUR-
  */
 export async function syncDeliveryAgentToSecureAccount(
-  agent: DeliveryAgent,
-  defaultPassword = 'OrA-Livreur2026!'
+  agent: DeliveryAgent
 ): Promise<void> {
   const existing = getSecureAccounts();
   const strictId = agent.id.toUpperCase().startsWith('LIVREUR-')
@@ -696,32 +696,89 @@ export async function syncDeliveryAgentToSecureAccount(
     : `LIVREUR-${agent.id.toUpperCase()}`;
 
   const found = existing.find(
-    (a) => a.id === strictId || (a.deliveryAgentId && a.deliveryAgentId === strictId) || a.phone === agent.phone
+    (a) => a.id === strictId || (a.deliveryAgentId && a.deliveryAgentId === strictId) || (agent.phone && a.phone === agent.phone)
   );
   if (found) return;
 
   const salt = generateCryptographicSalt();
-  const passwordHash = await hashPasswordWithSalt(defaultPassword, salt);
-  const digits = extractPhoneDigits(agent.phone);
+  // Placeholder hash until delivery courier activates their account and chooses password
+  const passwordHash = await hashPasswordWithSalt(`PENDING_ACTIVATION_${Date.now()}`, salt);
+  const digits = extractPhoneDigits(agent.phone || '');
 
   const newAccount: SecureAccount = {
     id: strictId,
     name: agent.name,
     email: `${agent.name.toLowerCase().replace(/[^a-z0-9]/g, '')}@livreur.ora.bj`,
-    phone: agent.phone,
+    phone: agent.phone || '',
     phoneDigits: digits,
     passwordHash,
     salt,
-    city: agent.zone,
-    address: agent.zone,
+    city: agent.zone || 'Cotonou',
+    address: agent.zone || 'Cotonou',
     role: 'delivery',
     deliveryAgentId: strictId,
     createdAt: Date.now(),
     failedLoginAttempts: 0,
-    lockedUntil: null
+    lockedUntil: null,
+    isPreRegistered: true // Waiting for courier to create their password via same login
   };
 
   saveSecureAccounts([...existing, newAccount]);
+}
+
+/**
+ * Checks if a delivery login was pre-registered by Admin and is awaiting initial password creation
+ */
+export function isDeliveryAccountPreRegistered(rawLogin: string): { preRegistered: boolean; account?: SecureAccount } {
+  const clean = rawLogin.trim();
+  const strictId = clean.toUpperCase().startsWith('LIVREUR-') ? clean.toUpperCase() : `LIVREUR-${clean.toUpperCase()}`;
+  const accounts = getSecureAccounts();
+  const acc = accounts.find(
+    (a) => (a.id === strictId || (a.deliveryAgentId && a.deliveryAgentId === strictId)) && a.role === 'delivery'
+  );
+  if (acc && acc.isPreRegistered) {
+    return { preRegistered: true, account: acc };
+  }
+  return { preRegistered: false, account: acc };
+}
+
+/**
+ * Activates a pre-registered delivery account by setting its real password chosen by the courier
+ */
+export async function activatePreRegisteredDeliveryAccount(
+  rawLogin: string,
+  newPassword: string
+): Promise<{ success: boolean; account?: SecureAccount; error?: string }> {
+  const check = isDeliveryAccountPreRegistered(rawLogin);
+  if (!check.preRegistered || !check.account) {
+    return { success: false, error: "Ce compte n'est pas en attente d'activation ou identifiant incorrect." };
+  }
+
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: 'Le mot de passe doit comporter au moins 8 caractères.' };
+  }
+
+  const salt = generateCryptographicSalt();
+  const passwordHash = await hashPasswordWithSalt(newPassword, salt);
+  const accounts = getSecureAccounts();
+
+  const updated = accounts.map((a) => {
+    if (a.id === check.account!.id) {
+      return {
+        ...a,
+        passwordHash,
+        salt,
+        isPreRegistered: false,
+        failedLoginAttempts: 0,
+        lockedUntil: null
+      };
+    }
+    return a;
+  });
+
+  saveSecureAccounts(updated);
+  const updatedAccount = updated.find((a) => a.id === check.account!.id);
+  return { success: true, account: updatedAccount };
 }
 
 /**

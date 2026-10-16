@@ -73,11 +73,46 @@ const INITIAL_DELIVERY_AGENTS: DeliveryAgent[] = [
 
 const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
   {
-    id: 'msg-welcome',
+    id: 'msg-welcome-karl',
+    clientId: 'user-karl',
     sender: 'concierge',
-    senderName: 'Conciergerie OrA',
-    text: 'Bonjour et bienvenue. Notre assistance est à votre écoute pour vous accompagner lors de votre règlement ou de votre commande.',
+    senderName: 'Conciergerie YourOrA',
+    text: 'Bonjour Karl Spero. Votre commande d’horlogerie a bien été enregistrée et transmise à notre atelier.',
     timestamp: '10:00'
+  },
+  {
+    id: 'msg-karl-1',
+    clientId: 'user-karl',
+    sender: 'user',
+    senderName: 'Karl Spero',
+    text: 'Bonjour, ma montre automatique est-elle prête pour livraison à la Haie Vive ?',
+    timestamp: '10:15'
+  },
+  {
+    id: 'msg-reply-1',
+    clientId: 'user-karl',
+    sender: 'admin',
+    senderName: '👑 Administrateur YourOrA',
+    text: 'Bonjour M. Spero. Votre colis est conditionné dans son écrin de luxe et remis à notre coursier. Le code secret vous sera demandé à la remise.',
+    timestamp: '10:20',
+    isAdminReply: true
+  },
+  {
+    id: 'msg-client-2',
+    clientId: 'cli-calavi-402',
+    sender: 'user',
+    senderName: 'Mireille Tossou',
+    text: 'Bonjour, le paiement Moov Money est-il bien validé pour mon flacon de Santal & Ambre ?',
+    timestamp: '11:05'
+  },
+  {
+    id: 'msg-reply-2',
+    clientId: 'cli-calavi-402',
+    sender: 'admin',
+    senderName: '👑 Administrateur YourOrA',
+    text: 'Bonjour Mme Tossou. Votre paiement sous séquestre a bien été confirmé par FedaPay. La livraison à Abomey-Calavi est programmée pour cet après-midi.',
+    timestamp: '11:10',
+    isAdminReply: true
   }
 ];
 
@@ -393,15 +428,21 @@ export default function App() {
     showToast(`Commande #${newOrder.id} validée. Assistance active pendant 24h.`);
   };
 
-  // Find latest order for current user to activate post-purchase 24h assistance
-  const latestOrderForCurrentClient = useMemo(() => {
-    if (!userProfile.id || userProfile.id === 'guest') return null;
-    return (
-      orders.find(
-        (o) => o.clientId === userProfile.id || (userProfile.email && o.buyerEmail === userProfile.email)
-      ) || null
+  // Commandes payées pour le client connecté (ou invité ayant payé)
+  const paidOrdersForCurrentClient = useMemo(() => {
+    return orders.filter(
+      (o) =>
+        (o.clientId === userProfile.id ||
+          (userProfile.email && o.buyerEmail === userProfile.email) ||
+          (userProfile.phone && o.buyerPhone === userProfile.phone)) &&
+        o.status !== 'Remboursée'
     );
   }, [orders, userProfile]);
+
+  // Suppression définitive des messages d'un client (ex: 30 min après livraison validée)
+  const handleClearClientMessages = (clientId: string) => {
+    setChatMessages((prev) => prev.filter((m) => (m.clientId || 'guest') !== clientId));
+  };
 
   // Admin Actions for Products & Hero Carousel
   const handleAdminAddProduct = (newProd: Product) => {
@@ -439,7 +480,18 @@ export default function App() {
 
   const handleAdminUpdateOrderStatus = (orderId: string, status: Order['status']) => {
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
+      prev.map((o) => {
+        if (o.id === orderId) {
+          const isNowDelivered = status === 'Livrée';
+          return {
+            ...o,
+            status,
+            deliveredAt: isNowDelivered ? (o.deliveredAt || Date.now()) : o.deliveredAt,
+            escrowStatus: isNowDelivered ? 'released' : o.escrowStatus
+          };
+        }
+        return o;
+      })
     );
     showToast(`Statut commande #${orderId} : ${status}`);
   };
@@ -763,6 +815,7 @@ export default function App() {
           onAddDeliveryAgent={handleAddDeliveryAgent}
           chatMessages={chatMessages}
           onSendAdminReplyToClient={handleSendAdminReplyToClient}
+          onClearClientMessages={handleClearClientMessages}
           onSetClientSupportDuration={handleSetClientSupportDuration}
           adminUser={userProfile}
           onSwitchToClientView={() => {
@@ -958,14 +1011,16 @@ export default function App() {
       />
 
       {/* Live Chat Widget:
-          Available strictly when client enters payment process OR has an active order (24h rule) */}
+          Apparaît UNIQUEMENT lorsqu'une commande a été payée par le client.
+          Compte à rebours de 30 minutes déclenché dès la livraison validée qui ferme et supprime la discussion. */}
       <LiveChatWidget
-        messages={chatMessages}
+        messages={chatMessages.filter(
+          (m) => (m.clientId || 'guest') === (userProfile.id || 'guest')
+        )}
         onSendMessage={handleSendMessage}
         currentUser={userProfile}
-        isInCheckout={currentView === 'checkout'}
-        activeOrder={latestOrderForCurrentClient}
-        supportDurationHours={supportDurationHours}
+        paidOrders={paidOrdersForCurrentClient}
+        onClearClientMessages={handleClearClientMessages}
       />
 
       {/* Toast Feedback */}

@@ -26,7 +26,9 @@ import {
   registerSecureAccount,
   evaluatePasswordSecurity,
   requestPasswordReset,
-  completePasswordReset
+  completePasswordReset,
+  isDeliveryAccountPreRegistered,
+  activatePreRegisteredDeliveryAccount
 } from '../utils/securityAuth';
 import {
   formatBeninNational,
@@ -82,6 +84,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [simulatedResetOtp, setSimulatedResetOtp] = useState<string | null>(null);
   const [maskedResetTarget, setMaskedResetTarget] = useState<string | null>(null);
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+
+  // Delivery first-time activation states (registered by Admin, creating password)
+  const [isDeliveryActivationOpen, setIsDeliveryActivationOpen] = useState(false);
+  const [activationLogin, setActivationLogin] = useState('');
+  const [activationPassword, setActivationPassword] = useState('');
+  const [activationPasswordConfirm, setActivationPasswordConfirm] = useState('');
+  const [showActivationPassword, setShowActivationPassword] = useState(false);
 
   // Feedback & Lockout countdown
   const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
@@ -175,6 +184,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    // Check if it's a pre-registered delivery courier attempting first-time connection
+    const preCheck = isDeliveryAccountPreRegistered(identifier);
+    if (preCheck.preRegistered) {
+      setActivationLogin(preCheck.account!.id);
+      setIsDeliveryActivationOpen(true);
+      setErrorFeedback(null);
+      setSuccessFeedback('Votre compte a été enregistré par la Direction. Veuillez définir votre mot de passe pour finaliser la création de votre compte.');
+      return;
+    }
+
     if (!loginPassword) {
       setErrorFeedback('Veuillez saisir votre mot de passe.');
       return;
@@ -218,6 +237,56 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setErrorFeedback('Accès refusé. Veuillez vérifier vos identifiants.');
       console.error(err);
     }
+  };
+
+  // Submit Delivery Courier Initial Activation
+  const handleDeliveryActivationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorFeedback(null);
+    setSuccessFeedback(null);
+
+    if (!activationPassword) {
+      setErrorFeedback('Veuillez définir votre mot de passe.');
+      return;
+    }
+
+    if (activationPassword.length < 8) {
+      setErrorFeedback('Le mot de passe doit comporter au moins 8 caractères.');
+      return;
+    }
+
+    if (activationPassword !== activationPasswordConfirm) {
+      setErrorFeedback('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const res = await activatePreRegisteredDeliveryAccount(activationLogin, activationPassword);
+    setIsSubmitting(false);
+
+    if (!res.success || !res.account) {
+      setErrorFeedback(res.error || "Impossible d'activer le compte.");
+      return;
+    }
+
+    setSuccessFeedback('Compte activé avec succès ! Connexion en cours...');
+    setTimeout(() => {
+      const userProfile: UserProfile = {
+        id: res.account!.id,
+        name: res.account!.name,
+        email: res.account!.email,
+        phone: res.account!.phone,
+        address: res.account!.address || res.account!.city,
+        city: res.account!.city,
+        postalCode: '00229',
+        country: 'Bénin',
+        role: 'delivery',
+        isAdmin: false,
+        deliveryAgentId: res.account!.deliveryAgentId
+      };
+      onLoginSuccess(userProfile, false, true);
+      onClose();
+    }, 700);
   };
 
   // Submit Forgot Password: Step 1 (Request code)
@@ -533,10 +602,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
+          {/* Delivery Courier Activation Form */}
+          {isDeliveryActivationOpen && (
+            <form onSubmit={handleDeliveryActivationSubmit} className="space-y-4">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                <p className="font-bold">Création de votre compte Livreur</p>
+                <p className="text-[11px] text-amber-800">
+                  Votre identifiant <span className="font-mono font-bold">{activationLogin}</span> a été validé par la Direction. Veuillez choisir votre mot de passe pour finaliser la création de votre compte et vous connecter.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-stone-700 block">Nouveau mot de passe</label>
+                <div className="relative">
+                  <input
+                    type={showActivationPassword ? 'text' : 'password'}
+                    value={activationPassword}
+                    onChange={(e) => setActivationPassword(e.target.value)}
+                    placeholder="Au moins 8 caractères"
+                    required
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowActivationPassword(!showActivationPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
+                  >
+                    {showActivationPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-stone-700 block">Confirmer le mot de passe</label>
+                <input
+                  type="password"
+                  value={activationPasswordConfirm}
+                  onChange={(e) => setActivationPasswordConfirm(e.target.value)}
+                  placeholder="Confirmez votre mot de passe"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:border-stone-900"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDeliveryActivationOpen(false);
+                    setErrorFeedback(null);
+                    setSuccessFeedback(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-black transition-colors"
+                >
+                  {isSubmitting ? 'Enregistrement...' : 'Activer & Se connecter'}
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* ============================================================ */}
           {/* TAB 1: SE CONNECTER                                          */}
           {/* ============================================================ */}
-          {authMode === 'login' && (
+          {!isDeliveryActivationOpen && authMode === 'login' && (
             <form onSubmit={handleLoginSubmit} noValidate className="space-y-4" autoComplete="off">
               
               {/* Selector: Téléphone vs Email */}
