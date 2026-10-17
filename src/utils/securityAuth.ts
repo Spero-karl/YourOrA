@@ -420,9 +420,17 @@ export function lookupAccountByIdentifier(rawIdentifier: string): AccountLookup 
   // Security standard: Zero indication given. We only look for customer accounts.
   const foundCustomer = accounts.find((a) => {
     if (a.role !== 'customer') return false;
-    if (a.email.toLowerCase() === lower) return true;
-    if (digits && digits.length >= 8 && a.phoneDigits && (a.phoneDigits === digits || a.phoneDigits.endsWith(digits))) return true;
-    if (a.id.toLowerCase() === lower) return true;
+    if (a.email && a.email.toLowerCase() === lower) return true;
+    if (digits && digits.length >= 6) {
+      const aDigits = a.phoneDigits || (a.phone ? a.phone.replace(/\D/g, '') : '');
+      if (aDigits) {
+        if (aDigits === digits) return true;
+        if (aDigits.endsWith(digits) || digits.endsWith(aDigits)) return true;
+        if (aDigits.length >= 8 && digits.length >= 8 && aDigits.slice(-8) === digits.slice(-8)) return true;
+      }
+    }
+    if (a.id && a.id.toLowerCase() === lower) return true;
+    if (a.name && a.name.trim().toLowerCase() === lower) return true;
     return false;
   });
 
@@ -502,17 +510,25 @@ export async function registerSecureAccount(params: {
 
   const existing = getSecureAccounts();
 
-  // Check if identifier already registered
+  // Check if identifier already registered to enforce uniqueness
   const duplicate = existing.find((a) => {
-    if (cleanEmail && a.email.toLowerCase() === cleanEmail) return true;
-    if (phoneDigits && phoneDigits.length >= 8 && a.phoneDigits && a.phoneDigits === phoneDigits) return true;
+    if (cleanEmail && a.email && a.email.toLowerCase() === cleanEmail) return true;
+    if (phoneDigits && phoneDigits.length >= 8) {
+      const aDigits = a.phoneDigits || (a.phone ? a.phone.replace(/\D/g, '') : '');
+      if (aDigits) {
+        if (aDigits === phoneDigits) return true;
+        if (aDigits.endsWith(phoneDigits) || phoneDigits.endsWith(aDigits)) return true;
+        if (aDigits.length >= 8 && phoneDigits.length >= 8 && aDigits.slice(-8) === phoneDigits.slice(-8)) return true;
+      }
+    }
+    if (name.trim() && a.name && a.name.trim().toLowerCase() === name.trim().toLowerCase()) return true;
     return false;
   });
 
   if (duplicate) {
     return {
       success: false,
-      error: 'Un compte existe déjà avec ces coordonnées. Veuillez vous connecter.'
+      error: 'Un compte unique existe déjà avec ces coordonnées. Veuillez vous connecter avec votre mot de passe.'
     };
   }
 

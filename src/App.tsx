@@ -479,15 +479,16 @@ export default function App() {
   };
 
   const handleAdminUpdateOrderStatus = (orderId: string, status: Order['status']) => {
+    if (status === 'Livrée') {
+      showToast("Sécurité séquestre : seul le livreur peut valider la livraison en saisissant le code secret remis par le client.");
+      return;
+    }
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id === orderId) {
-          const isNowDelivered = status === 'Livrée';
           return {
             ...o,
-            status,
-            deliveredAt: isNowDelivered ? (o.deliveredAt || Date.now()) : o.deliveredAt,
-            escrowStatus: isNowDelivered ? 'released' : o.escrowStatus
+            status
           };
         }
         return o;
@@ -497,13 +498,21 @@ export default function App() {
   };
 
   const handleAssignDeliveryAgent = (orderId: string, agentId: string) => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (targetOrder && targetOrder.status === 'Livrée') {
+      showToast("Impossible de modifier le livreur d'une commande déjà livrée.");
+      return;
+    }
+
     const agent = deliveryAgents.find((a) => a.id === agentId);
     const agentName = agent ? agent.name : undefined;
-    const targetOrder = orders.find((o) => o.id === orderId);
 
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id === orderId) {
+          if (o.status === 'Livrée') {
+            return o;
+          }
           const newTimeline = [
             ...(o.timeline || []),
             {

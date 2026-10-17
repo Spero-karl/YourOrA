@@ -8,7 +8,8 @@ import {
   Headphones,
   CheckCheck,
   AlertTriangle,
-  Timer
+  Timer,
+  ArrowLeft
 } from 'lucide-react';
 import { ChatMessage, UserProfile, Order } from '../types';
 
@@ -143,8 +144,17 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({
           
           {/* Header Vert WhatsApp */}
           <div className="p-3.5 bg-emerald-800 text-white flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="relative">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={() => setIsOpen(false)}
+                type="button"
+                className="p-1 -ml-1 rounded-full text-emerald-100 hover:text-white hover:bg-emerald-700/80 transition-colors cursor-pointer shrink-0"
+                title="Sortir de la discussion (Retour)"
+                aria-label="Sortir de la discussion"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div className="relative shrink-0">
                 <div className="w-9 h-9 rounded-full bg-emerald-950 text-amber-300 flex items-center justify-center font-bold text-sm border border-emerald-600 shadow-xs">
                   OrA
                 </div>
@@ -155,7 +165,7 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({
                   <span>Support Client YourOrA</span>
                 </h4>
                 <p className="text-[10px] text-emerald-200 flex items-center gap-1">
-                  <span>En ligne • Échange direct avec notre équipe</span>
+                  <span>En ligne • Échange direct</span>
                 </p>
               </div>
             </div>
@@ -163,8 +173,8 @@ export const LiveChatWidget: React.FC<LiveChatWidgetProps> = ({
             <button
               onClick={() => setIsOpen(false)}
               type="button"
-              className="p-1.5 rounded-full text-emerald-200 hover:text-white hover:bg-emerald-700/60 transition-colors cursor-pointer"
-              title="Fermer la discussion"
+              className="p-1.5 rounded-full text-emerald-200 hover:text-white hover:bg-emerald-700/60 transition-colors cursor-pointer shrink-0"
+              title="Fermer la fenêtre"
             >
               <X className="w-4 h-4" />
             </button>

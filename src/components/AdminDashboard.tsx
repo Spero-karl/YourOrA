@@ -40,7 +40,10 @@ import {
   Percent,
   CheckCheck,
   UserCheck,
-  Timer
+  Timer,
+  Lock,
+  Download,
+  Laptop
 } from 'lucide-react';
 import { Order, DeliveryAgent, Product, UserProfile, OrderStatus, ChatMessage } from '../types';
 import { formatFCFA } from '../utils/formatCurrency';
@@ -95,6 +98,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Deuxième Dashboard Chiffre d'Affaires (Ouvert uniquement au clic sur le Chiffre d'Affaires)
   const [isRevenueDashboardOpen, setIsRevenueDashboardOpen] = useState(false);
+  const [revenueSearchQuery, setRevenueSearchQuery] = useState('');
+  const [revenueZoneFilter, setRevenueZoneFilter] = useState<'all' | 'cotonou' | 'calavi' | 'plusloin'>('all');
 
   // Modal Produit
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -189,6 +194,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       detailedCourses
     };
   }, [validatedAmount, deliveredOrders]);
+
+  // Filtrage du Grand Livre Financier (Recherche & Zone)
+  const filteredRevenueCourses = useMemo(() => {
+    return financialBreakdown.detailedCourses.filter((item) => {
+      // Filtre Zone
+      if (revenueZoneFilter === 'cotonou' && item.commission !== 500) return false;
+      if (revenueZoneFilter === 'calavi' && item.commission !== 800) return false;
+      if (revenueZoneFilter === 'plusloin' && item.commission !== 1000) return false;
+
+      // Filtre Recherche
+      if (revenueSearchQuery.trim()) {
+        const q = revenueSearchQuery.toLowerCase();
+        const matchesOrder = item.order.id.toLowerCase().includes(q);
+        const matchesClient = (item.order.buyerName || '').toLowerCase().includes(q);
+        const matchesAddress = (item.order.shippingAddress || '').toLowerCase().includes(q);
+        const matchesAgent = (item.order.assignedDeliveryAgentName || '').toLowerCase().includes(q);
+        return matchesOrder || matchesClient || matchesAddress || matchesAgent;
+      }
+
+      return true;
+    });
+  }, [financialBreakdown.detailedCourses, revenueZoneFilter, revenueSearchQuery]);
+
+  // Exportation CSV Professionnelle du Relevé Financier
+  const handleExportRevenueCSV = () => {
+    if (deliveredOrders.length === 0) return;
+    const headers = [
+      'N° Commande',
+      'Date',
+      'Client',
+      'Contact',
+      'Destination',
+      'Zone Tarifaire',
+      'CA Brut (FCFA)',
+      'TVA 5% (FCFA)',
+      'Commission Livreur (FCFA)',
+      'Net Boutique OrA (FCFA)',
+      'Livreur Assigné'
+    ];
+    const rows = financialBreakdown.detailedCourses.map((c) => [
+      `"${c.order.id}"`,
+      `"${c.order.date}"`,
+      `"${(c.order.buyerName || 'Client').replace(/"/g, '""')}"`,
+      `"${c.order.buyerPhone || c.order.buyerEmail || ''}"`,
+      `"${(c.order.shippingAddress || '').replace(/"/g, '""')}"`,
+      `"${c.zoneName}"`,
+      c.order.total,
+      c.tva,
+      c.commission,
+      c.net,
+      `"${(c.order.assignedDeliveryAgentName || 'Livreur flotte').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `releve_financier_yourora_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // ==========================================================
   // MESSAGERIE ASSISTANCE - RÈGLE STRICTE UTILISATEUR :
@@ -291,12 +358,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return list;
   }, [chatMessages, orders, chatSearch]);
 
-  // Client sélectionné dans la discussion (par défaut le premier de la liste s'il existe)
+  // Client sélectionné dans la discussion : null si aucune discussion n'est sélectionnée (affiche la page d'accueil WhatsApp PC)
   const currentChatClientId = useMemo(() => {
-    if (selectedChatClientId && clientConversations.some((c) => c.clientId === selectedChatClientId)) {
+    if (!selectedChatClientId) {
+      return null;
+    }
+    if (clientConversations.some((c) => c.clientId === selectedChatClientId)) {
       return selectedChatClientId;
     }
-    return clientConversations[0]?.clientId || null;
+    return null;
   }, [selectedChatClientId, clientConversations]);
 
   const activeChatMessages = useMemo(() => {
@@ -511,14 +581,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             }}
             role="button"
             tabIndex={0}
-            className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs hover:border-slate-400 transition-all flex items-center gap-3.5 cursor-pointer"
+            className="bg-white border border-[#E7DECE] hover:border-[#D0C0AC] rounded-xl p-4 shadow-2xs transition-all flex items-center gap-3.5 cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-700 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF7F2] border border-[#E7DECE] text-[#8C6D28] flex items-center justify-center shrink-0">
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500">Commandes en cours</p>
-              <p className="text-xl font-bold text-slate-900 mt-0.5">{pendingOrdersCount}</p>
+              <p className="text-xs font-semibold text-[#78716C]">Commandes en cours</p>
+              <p className="text-xl font-extrabold text-[#1C1917] mt-0.5">{pendingOrdersCount}</p>
             </div>
           </div>
 
@@ -529,14 +599,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             }}
             role="button"
             tabIndex={0}
-            className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs hover:border-slate-400 transition-all flex items-center gap-3.5 cursor-pointer"
+            className="bg-white border border-[#E7DECE] hover:border-[#D0C0AC] rounded-xl p-4 shadow-2xs transition-all flex items-center gap-3.5 cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-700 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF7F2] border border-[#E7DECE] text-[#15803D] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500">Commandes livrées</p>
-              <p className="text-xl font-bold text-slate-900 mt-0.5">{validatedOrdersCount}</p>
+              <p className="text-xs font-semibold text-[#78716C]">Commandes livrées</p>
+              <p className="text-xl font-extrabold text-[#1C1917] mt-0.5">{validatedOrdersCount}</p>
             </div>
           </div>
 
@@ -551,26 +621,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 setIsRevenueDashboardOpen(true);
               }
             }}
-            className="bg-white border-2 border-amber-300 hover:border-amber-500 hover:shadow-md rounded-xl p-4 shadow-xs transition-all flex items-center justify-between gap-3.5 cursor-pointer group"
-            title="Cliquez pour ouvrir le 2ème Dashboard Financier (TVA 5%, Commissions Livreurs, Bénéfice Net)"
+            className="bg-white border border-[#E7DECE] hover:border-[#C5A059] hover:shadow-md rounded-xl p-4 shadow-2xs transition-all flex items-center justify-between gap-3.5 cursor-pointer group"
+            title="Consulter le Grand Livre & Direction Financière (TVA 5%, Barème Livreurs, Marge Nette Marchand)"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-10 h-10 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-[#1C1917] text-[#C5A059] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-slate-800">Chiffre d'affaires livré</p>
-                  <span className="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded font-bold">
+                  <p className="text-xs font-bold text-[#1C1917]">Chiffre d'affaires livré</p>
+                  <span className="text-[10px] bg-[#F5EEDB] text-[#8C6D28] border border-[#E0D0AB] px-2 py-0.5 rounded-full font-bold">
                     Ouvrir Détails
                   </span>
                 </div>
-                <p className="text-xl font-bold text-slate-900 mt-0.5 font-mono truncate">
+                <p className="text-xl font-extrabold text-[#1C1917] mt-0.5 font-mono truncate">
                   {formatFCFA(validatedAmount)}
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-amber-600 group-hover:translate-x-1 transition-transform shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#8C7A68] group-hover:text-[#C5A059] group-hover:translate-x-1 transition-all shrink-0" />
           </div>
 
         </div>
@@ -819,42 +889,77 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {/* Livreur assigné & Actions rapides */}
                         <div className="space-y-2 flex flex-col justify-between">
                           <div className="space-y-1">
-                            <label className="text-[11px] font-semibold text-slate-500 block">
-                              Livreur affecté :
+                            <label className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                              {isDelivered && <Lock className="w-3 h-3 text-emerald-600" />}
+                              <span>Livreur affecté :</span>
                             </label>
-                            <select
-                              value={ord.assignedDeliveryAgentId || ''}
-                              onChange={(e) => onAssignDeliveryAgent(ord.id, e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-slate-800"
-                            >
-                              <option value="">Sélectionner un livreur...</option>
-                              {deliveryAgents.map((ag) => (
-                                <option key={ag.id} value={ag.id}>
-                                  {ag.name} ({ag.zone})
-                                </option>
-                              ))}
-                            </select>
+                            {isDelivered ? (
+                              <div className="bg-slate-100 border border-slate-200/90 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2 text-xs text-slate-800">
+                                <span className="font-semibold truncate">
+                                  {ord.assignedDeliveryAgentName || 'Livreur flotte'}
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 border border-emerald-200">
+                                  <Lock className="w-2.5 h-2.5" />
+                                  Verrouillé
+                                </span>
+                              </div>
+                            ) : (
+                              <select
+                                value={ord.assignedDeliveryAgentId || ''}
+                                onChange={(e) => onAssignDeliveryAgent(ord.id, e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-slate-800"
+                              >
+                                <option value="">Sélectionner un livreur...</option>
+                                {deliveryAgents.map((ag) => (
+                                  <option key={ag.id} value={ag.id}>
+                                    {ag.name} ({ag.zone})
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {isDelivered && (
+                              <p className="text-[10px] text-slate-400 italic">
+                                Livreur verrouillé après livraison du produit
+                              </p>
+                            )}
                           </div>
 
-                          {/* Statuts modifier */}
-                          <div className="flex items-center gap-1.5 pt-1">
-                            {!isDelivered && (
-                              <button
-                                type="button"
-                                onClick={() => onUpdateOrderStatus(ord.id, 'Livrée')}
-                                className="flex-1 py-1 px-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
-                              >
-                                Valider livraison
-                              </button>
+                          {/* Statuts & Séquestre : validation UNIQUEMENT par code secret livreur */}
+                          <div className="pt-1 space-y-1.5">
+                            {!isDelivered ? (
+                              <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-lg p-2 text-xs text-[#57534E] flex items-start gap-2">
+                                <KeyRound className="w-3.5 h-3.5 text-[#C5A059] shrink-0 mt-0.5" />
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-[11px] text-[#1C1917]">Validation par code secret</span>
+                                    <span className="text-[10px] font-mono bg-white px-1.5 py-0.2 rounded border border-[#E7DECE] font-bold text-[#8C6D28]">
+                                      {ord.deliveryCode || '••••'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-[#78716C] leading-snug">
+                                    L'admin ne valide pas la livraison : le client remet ce code au livreur, qui le saisit pour valider la livraison.
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-lg px-2.5 py-1.5 text-xs text-emerald-900 flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span>Livraison validée par code</span>
+                                </span>
+                                <span className="text-[10px] font-mono bg-white px-1.5 py-0.2 rounded border border-emerald-200 font-bold text-emerald-800">
+                                  Fonds débloqués
+                                </span>
+                              </div>
                             )}
 
                             {isIssue && (
                               <button
                                 type="button"
                                 onClick={() => onResolveDispute(ord.id, 'release_to_seller')}
-                                className="py-1 px-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors cursor-pointer"
+                                className="w-full py-1 px-2 rounded bg-[#1C1917] hover:bg-[#292524] text-white font-bold text-[11px] transition-colors cursor-pointer"
                               >
-                                Résoudre litige
+                                Résoudre litige (Médiation Admin)
                               </button>
                             )}
                           </div>
@@ -1075,7 +1180,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row h-[620px] animate-in fade-in">
             
             {/* Panneau Gauche : Liste des discussions clients (WhatsApp Web style) */}
-            <div className="w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col bg-slate-50/50">
+            <div className={`w-full md:w-80 lg:w-96 border-r border-slate-200 flex flex-col bg-slate-50/50 ${currentChatClientId ? 'hidden md:flex' : 'flex'}`}>
               
               {/* Header liste */}
               <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
@@ -1170,13 +1275,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             {/* Panneau Droit : Fil de discussion Messenger / WhatsApp */}
-            <div className="flex-1 flex flex-col bg-[#F0F2F5] min-w-0">
+            <div className={`flex-1 flex flex-col bg-[#F0F2F5] min-w-0 ${!currentChatClientId ? 'hidden md:flex' : 'flex'}`}>
               
               {selectedClientInfo ? (
                 <>
                   {/* En-tête de la discussion sélectionnée */}
                   <div className="p-3 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedChatClientId(null)}
+                        className="p-1.5 -ml-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                        title="Sortir de la discussion (Retour à la liste)"
+                        aria-label="Retour aux discussions"
+                      >
+                        <ArrowLeft className="w-4 h-4 text-slate-700" />
+                        <span className="text-[11px] font-bold hidden sm:inline">Retour</span>
+                      </button>
                       <div className="w-9 h-9 rounded-full bg-slate-900 text-amber-400 font-bold flex items-center justify-center text-sm shrink-0">
                         {selectedClientInfo.name.charAt(0).toUpperCase()}
                       </div>
@@ -1292,12 +1407,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </form>
                 </>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-2">
-                  <MessageSquare className="w-12 h-12 text-slate-300 stroke-1" />
-                  <p className="text-sm font-semibold text-slate-600">Aucune discussion sélectionnée</p>
-                  <p className="text-xs text-slate-400 max-w-sm">
-                    Les discussions apparaissent ici dès qu'un client ayant payé vous envoie un message.
-                  </p>
+                <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 text-center bg-[#F0F2F5] select-none overflow-y-auto">
+                  <div className="max-w-md w-full flex flex-col items-center space-y-5 my-auto py-4">
+                    {/* Illustration WhatsApp PC / Web */}
+                    <div className="relative">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#E9EDEF] border-4 border-white flex items-center justify-center shadow-inner">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-700/10 flex items-center justify-center">
+                          <Laptop className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-700" />
+                        </div>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md ring-2 ring-white">
+                        <MessageSquare className="w-4 h-4 fill-current" />
+                      </div>
+                    </div>
+
+                    {/* Titres et présentation WhatsApp Web */}
+                    <div className="space-y-1.5">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">
+                        YourOrA Messagerie Web & Support
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                        Envoyez et recevez des messages d'assistance avec vos clients acheteurs en temps réel.
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Sélectionnez un compte client dans la liste pour ouvrir la discussion.
+                      </p>
+                    </div>
+
+                    {/* 3 Cartes de fonctionnalités WhatsApp Web */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full text-left pt-1">
+                      <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800">Canal Vérifié</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Seuls les clients avec commande payée peuvent écrire</p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                        <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center mb-1.5">
+                          <Timer className="w-3.5 h-3.5" />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800">Purge 24h</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Suppression automatique 24h après livraison validée</p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                        <div className="w-6 h-6 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center mb-1.5">
+                          <CheckCheck className="w-3.5 h-3.5" />
+                        </div>
+                        <p className="text-[11px] font-bold text-slate-800">1 Clic Rapide</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Réponses types pour livreur en route ou colis prêt</p>
+                      </div>
+                    </div>
+
+                    {/* Mention de chiffrement au bas comme WhatsApp Web */}
+                    <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium">
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Chiffré de bout en bout • Protégé par séquestre OrA</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1313,330 +1482,450 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* (Accessible UNIQUEMENT au clic sur le Chiffre d'affaires) */}
       {/* ======================================================== */}
       {isRevenueDashboardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in">
-          <div className="bg-slate-50 border border-slate-200 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh]">
-            
-            {/* Header du 2ème Dashboard */}
-            <div className="bg-slate-900 text-white p-5 sm:p-6 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md shrink-0">
-                  <PieChart className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 bg-[#FAF7F2] text-[#1C1917] flex flex-col h-screen w-screen overflow-hidden font-body animate-in fade-in duration-150">
+          
+          {/* Header Supérieur harmonisé avec le template YourOrA */}
+          <header className="bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#ECE4D8] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsRevenueDashboardOpen(false)}
+                className="flex items-center gap-2 py-1.5 px-3.5 bg-[#F3ECE0] hover:bg-[#ECE3D5] text-[#292524] rounded-full border border-[#E3D8C8] text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+                title="Quitter et revenir au Dashboard principal"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#8C7A68]" />
+                <span>Retour au Dashboard</span>
+              </button>
+
+              <div className="h-6 w-px bg-[#E3D8C8] hidden sm:block" />
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#1C1917] text-[#FAF7F2] font-serif font-black flex items-center justify-center text-base shadow-xs">
+                  O
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
-                      Deuxième Dashboard : Clôture & Répartition Financière
+                    <h2 className="font-serif-luxury text-base sm:text-lg font-bold text-[#1C1917] tracking-wide">
+                      Direction Financière • Clôture & Grand Livre Analytique
                     </h2>
-                    <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-mono">
-                      Bénin (FCFA)
+                    <span className="text-[10px] bg-[#EBF5EE] text-[#15803D] border border-[#BDE3C7] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#15803D] animate-pulse" />
+                      Temps réel
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Répartition du chiffre d'affaires sur {validatedOrdersCount} commande{validatedOrdersCount > 1 ? 's' : ''} livrée{validatedOrdersCount > 1 ? 's' : ''} (TVA 5%, barème courses livreurs & bénéfice net)
+                  <p className="text-[11px] text-[#78716C] hidden sm:block">
+                    Répartition officielle YourOrA Bénin (TVA 5% • Barème courses livreurs • Marge nette marchand)
                   </p>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Imprimer ou enregistrer le relevé financier en PDF"
-                >
-                  <Printer className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Imprimer</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsRevenueDashboardOpen(false)}
-                  className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Fermer le 2ème Dashboard"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
             </div>
 
-            {/* Corps scrollable du 2ème Dashboard */}
-            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+            {/* Actions Rapides Export & Impression */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportRevenueCSV}
+                className="py-1.5 px-3 rounded-xl bg-white hover:bg-[#F3ECE0] text-[#292524] text-xs font-semibold flex items-center gap-1.5 border border-[#E3D8C8] transition-colors cursor-pointer shadow-2xs"
+                title="Exporter le grand livre en fichier CSV (Excel)"
+              >
+                <Download className="w-3.5 h-3.5 text-[#C5A059]" />
+                <span className="hidden md:inline">Exporter CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="py-1.5 px-3 rounded-xl bg-white hover:bg-[#F3ECE0] text-[#292524] text-xs font-semibold flex items-center gap-1.5 border border-[#E3D8C8] transition-colors cursor-pointer shadow-2xs"
+                title="Imprimer ou enregistrer le relevé financier"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#8C7A68]" />
+                <span className="hidden md:inline">Imprimer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsRevenueDashboardOpen(false)}
+                className="p-1.5 rounded-full text-[#78716C] hover:text-[#1C1917] hover:bg-[#EAE2D5] transition-colors cursor-pointer"
+                title="Fermer le terminal financier"
+                aria-label="Fermer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </header>
+
+          {/* Corps Scrollable Plein Écran aux teintes chaleureuses du template */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 bg-[#FAF7F2]">
+            
+            {/* 4 PÔLES FINANCIERS CLÉS (DESIGN SOBRE ET ÉLÉGANT TEMPLATE APP) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              {/* 4 PÔLES FINANCIERS CLÉS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                {/* CA Brut */}
-                <div className="bg-white border-2 border-slate-200 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-1">
-                      <span>Chiffre d'Affaires Brut</span>
-                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">100%</span>
-                    </div>
-                    <p className="text-2xl font-black font-mono text-slate-900 tracking-tight mt-1">
-                      {formatFCFA(validatedAmount)}
-                    </p>
+              {/* 1. CA Brut */}
+              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <DollarSign className="w-4 h-4 text-[#C5A059]" />
+                      Chiffre d'Affaires Brut
+                    </span>
+                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                      100.0%
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-                    Total des ventes encaissées sur les commandes livrées
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">
+                    {formatFCFA(validatedAmount)}
                   </p>
                 </div>
-
-                {/* TVA 5% */}
-                <div className="bg-white border-2 border-rose-200 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-rose-700 font-semibold mb-1">
-                      <span className="flex items-center gap-1">
-                        <Percent className="w-3.5 h-3.5" />
-                        TVA (5%)
-                      </span>
-                      <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-bold">5% Fixe</span>
-                    </div>
-                    <p className="text-2xl font-black font-mono text-rose-600 tracking-tight mt-1">
-                      {formatFCFA(financialBreakdown.tva)}
-                    </p>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-                    Part réservée pour obligations fiscales au Bénin
-                  </p>
-                </div>
-
-                {/* Commissions Livreurs */}
-                <div className="bg-white border-2 border-blue-200 rounded-2xl p-4.5 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-blue-700 font-semibold mb-1">
-                      <span className="flex items-center gap-1">
-                        <Truck className="w-3.5 h-3.5" />
-                        Commissions Livreurs
-                      </span>
-                      <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold">Courses</span>
-                    </div>
-                    <p className="text-2xl font-black font-mono text-blue-600 tracking-tight mt-1">
-                      {formatFCFA(financialBreakdown.deliveryCommissions)}
-                    </p>
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-                    Total reversé aux livreurs selon la destination
-                  </p>
-                </div>
-
-                {/* Marge Nette YourOrA */}
-                <div className="bg-emerald-950 text-white rounded-2xl p-4.5 shadow-sm border-2 border-emerald-700 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-emerald-200 font-semibold mb-1">
-                      <span className="flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        Bénéfice Net OrA
-                      </span>
-                      <span className="bg-emerald-800 text-emerald-100 px-2 py-0.5 rounded-full text-[10px] font-bold">Net Final</span>
-                    </div>
-                    <p className="text-2xl font-black font-mono text-amber-300 tracking-tight mt-1">
-                      {formatFCFA(financialBreakdown.netAmount)}
-                    </p>
-                  </div>
-                  <p className="text-[11px] text-emerald-300 mt-2 pt-2 border-t border-emerald-800/80">
-                    Solde net restant après TVA et courses de livraison
-                  </p>
-                </div>
-
-              </div>
-
-              {/* BARRE ANALYTIQUE DE VENTILATION VISUELLE */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xs">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Ventilation Graphique du Chiffre d'Affaires
-                </span>
-
-                <div className="w-full h-4 rounded-full overflow-hidden flex bg-slate-100 p-0.5 border border-slate-200">
-                  <div
-                    style={{
-                      width: `${validatedAmount > 0 ? (financialBreakdown.netAmount / validatedAmount) * 100 : 80}%`
-                    }}
-                    className="bg-emerald-600 h-full rounded-l-full transition-all"
-                    title="Part Nette OrA"
-                  />
-                  <div
-                    style={{
-                      width: `${validatedAmount > 0 ? (financialBreakdown.tva / validatedAmount) * 100 : 5}%`
-                    }}
-                    className="bg-rose-500 h-full transition-all"
-                    title="TVA 5%"
-                  />
-                  <div
-                    style={{
-                      width: `${validatedAmount > 0 ? (financialBreakdown.deliveryCommissions / validatedAmount) * 100 : 15}%`
-                    }}
-                    className="bg-blue-500 h-full rounded-r-full transition-all"
-                    title="Commissions Livreurs"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between text-xs pt-1 gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-emerald-600 inline-block" />
-                    <span className="text-slate-700 font-medium">Boutique Net : <strong className="font-mono text-emerald-800">{formatFCFA(financialBreakdown.netAmount)}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
-                    <span className="text-slate-700 font-medium">TVA 5% : <strong className="font-mono text-rose-700">{formatFCFA(financialBreakdown.tva)}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" />
-                    <span className="text-slate-700 font-medium">Commissions Livreurs : <strong className="font-mono text-blue-700">{formatFCFA(financialBreakdown.deliveryCommissions)}</strong></span>
-                  </div>
+                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
+                  <span>{validatedOrdersCount} commande{validatedOrdersCount > 1 ? 's' : ''} livrée{validatedOrdersCount > 1 ? 's' : ''}</span>
+                  <span className="font-mono text-[#8C7A68]">Bénin XOF</span>
                 </div>
               </div>
 
-              {/* GRILLE DU BARÈME DES COURSES LIVREURS */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-blue-600" />
+              {/* 2. TVA 5% */}
+              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Percent className="w-4 h-4 text-[#8C7A68]" />
+                      TVA Légale (5%)
+                    </span>
+                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                      5% Fixe
+                    </span>
+                  </div>
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#44403C] tracking-tight">
+                    {formatFCFA(financialBreakdown.tva)}
+                  </p>
+                </div>
+                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
+                  <span>Provisions fiscales réservées</span>
+                  <span className="text-[#8C7A68] font-mono">DGI Bénin</span>
+                </div>
+              </div>
+
+              {/* 3. Commissions Livreurs */}
+              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-[#8C7A68]" />
+                      Commissions Livreurs
+                    </span>
+                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                      Au barème
+                    </span>
+                  </div>
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#44403C] tracking-tight">
+                    {formatFCFA(financialBreakdown.deliveryCommissions)}
+                  </p>
+                </div>
+                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
+                  <span>{financialBreakdown.detailedCourses.length} course{financialBreakdown.detailedCourses.length > 1 ? 's' : ''} indemnisée{financialBreakdown.detailedCourses.length > 1 ? 's' : ''}</span>
+                  <span className="text-[#8C7A68] font-mono">500 / 800 / 1000F</span>
+                </div>
+              </div>
+
+              {/* 4. Résultat Net Boutique */}
+              <div className="bg-[#FDFBF7] rounded-2xl border-2 border-[#C5A059] p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-[#8C6D28] font-bold mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#C5A059]" />
+                      Bénéfice Net OrA
+                    </span>
+                    <span className="bg-[#F5EEDB] text-[#8C6D28] border border-[#E0D0AB] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                      {validatedAmount > 0 ? ((financialBreakdown.netAmount / validatedAmount) * 100).toFixed(1) : '0.0'}%
+                    </span>
+                  </div>
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">
+                    {formatFCFA(financialBreakdown.netAmount)}
+                  </p>
+                </div>
+                <div className="pt-3 mt-3 border-t border-[#F0E4CE] text-[11px] text-[#8C6D28] flex items-center justify-between font-medium">
+                  <span>Solde net marchand consolidé</span>
+                  <span className="text-[#15803D] font-bold font-mono">Clôturé</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* SECTION ANALYTIQUE : BARÈME OFFICIEL & VENTILATION DANS LE TEMPLATE */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Barème Officiel des Courses (Cartes template) */}
+              <div className="lg:col-span-2 bg-white border border-[#E7DECE] rounded-2xl p-5 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-[#F0EAE1] pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <Truck className="w-4 h-4 text-[#C5A059]" />
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Barème Officiel des Commissions selon la Zone
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#1C1917]">
+                        Barème Officiel des Frais de Course Livreurs
                       </h3>
-                      <p className="text-xs text-slate-500">
-                        Application automatique selon l'adresse de destination
+                      <p className="text-[11px] text-[#78716C]">
+                        Tarification réglementée appliquée selon la zone de destination
                       </p>
                     </div>
                   </div>
-
-                  <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
-                    Total : {formatFCFA(financialBreakdown.deliveryCommissions)}
+                  <span className="text-xs font-mono font-bold text-[#8C6D28] bg-[#FDF9F0] border border-[#E5C984] px-2.5 py-1 rounded-lg">
+                    Total déboursé : {formatFCFA(financialBreakdown.deliveryCommissions)}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   
                   {/* Zone 1 : Cotonou */}
-                  <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 text-center space-y-1">
-                    <span className="text-xs font-bold text-slate-700 block">Courses dans Cotonou</span>
-                    <p className="text-xl font-black font-mono text-slate-900">500 FCFA</p>
-                    <p className="text-[11px] text-slate-500">Haie Vive, Cadjèhoun, Fidjrossè...</p>
-                    <div className="pt-2">
-                      <span className="text-xs font-semibold text-blue-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 inline-block">
-                        {financialBreakdown.cotonouCourses} course{financialBreakdown.cotonouCourses > 1 ? 's' : ''} = {formatFCFA(financialBreakdown.cotonouCourses * 500)}
-                      </span>
+                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#44403C] block">Courses dans Cotonou</span>
+                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">500 FCFA</p>
+                      <p className="text-[10px] text-[#78716C] mt-0.5">Haie Vive, Cadjèhoun, Fidjrossè, Ganhi</p>
+                    </div>
+                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
+                      <span className="text-[#78716C]">{financialBreakdown.cotonouCourses} course{financialBreakdown.cotonouCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.cotonouCourses * 500)}</span>
                     </div>
                   </div>
 
                   {/* Zone 2 : Calavi & Godomey */}
-                  <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 text-center space-y-1">
-                    <span className="text-xs font-bold text-slate-700 block">Calavi / Godomey</span>
-                    <p className="text-xl font-black font-mono text-slate-900">800 FCFA</p>
-                    <p className="text-[11px] text-slate-500">Abomey-Calavi, Godomey, Tankpè...</p>
-                    <div className="pt-2">
-                      <span className="text-xs font-semibold text-blue-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 inline-block">
-                        {financialBreakdown.calaviGodomeyCourses} course{financialBreakdown.calaviGodomeyCourses > 1 ? 's' : ''} = {formatFCFA(financialBreakdown.calaviGodomeyCourses * 800)}
-                      </span>
+                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#44403C] block">Calavi / Godomey</span>
+                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">800 FCFA</p>
+                      <p className="text-[10px] text-[#78716C] mt-0.5">Abomey-Calavi, Godomey, Tankpè, Akassato</p>
+                    </div>
+                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
+                      <span className="text-[#78716C]">{financialBreakdown.calaviGodomeyCourses} course{financialBreakdown.calaviGodomeyCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.calaviGodomeyCourses * 800)}</span>
                     </div>
                   </div>
 
-                  {/* Zone 3 : Plus loin */}
-                  <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 text-center space-y-1">
-                    <span className="text-xs font-bold text-slate-700 block">Plus Loin</span>
-                    <p className="text-xl font-black font-mono text-slate-900">1 000 FCFA</p>
-                    <p className="text-[11px] text-slate-500">Porto-Novo, Ouidah & Environs</p>
-                    <div className="pt-2">
-                      <span className="text-xs font-semibold text-blue-700 bg-white px-2 py-0.5 rounded-md border border-slate-200 inline-block">
-                        {financialBreakdown.plusLoinCourses} course{financialBreakdown.plusLoinCourses > 1 ? 's' : ''} = {formatFCFA(financialBreakdown.plusLoinCourses * 1000)}
-                      </span>
+                  {/* Zone 3 : Plus Loin */}
+                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                    <div>
+                      <span className="text-[11px] font-bold text-[#44403C] block">Plus Loin / Périphérie</span>
+                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">1 000 FCFA</p>
+                      <p className="text-[10px] text-[#78716C] mt-0.5">Porto-Novo, Ouidah, Sèmè-Kpodji & Environs</p>
+                    </div>
+                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
+                      <span className="text-[#78716C]">{financialBreakdown.plusLoinCourses} course{financialBreakdown.plusLoinCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.plusLoinCourses * 1000)}</span>
                     </div>
                   </div>
 
                 </div>
               </div>
 
-              {/* GRAND TABLEAU ANALYTIQUE COMMANDE PAR COMMANDE */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Grand Livre des Ventes & Répartitions
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Détail ligne par ligne : montant brut, TVA 5%, commission livreur et net boutique
-                    </p>
-                  </div>
-                  <span className="text-xs text-slate-500 font-mono">
-                    {deliveredOrders.length} opération{deliveredOrders.length > 1 ? 's' : ''}
-                  </span>
+              {/* Ventilation Graphique Template YourOrA */}
+              <div className="bg-white border border-[#E7DECE] rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-xs">
+                <div className="border-b border-[#F0EAE1] pb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#1C1917]">
+                    Ventilation Proportionnelle du CA
+                  </h3>
+                  <p className="text-[11px] text-[#78716C]">
+                    Répartition pour 100 FCFA de vente brute
+                  </p>
                 </div>
 
-                {deliveredOrders.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-xl">
-                    Aucune commande n'est encore marquée comme livrée.
+                <div className="space-y-3 flex-1 flex flex-col justify-center">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-[#8C6D28] font-semibold">Boutique OrA (Net)</span>
+                      <span className="font-mono text-[#8C6D28] font-bold">
+                        {validatedAmount > 0 ? ((financialBreakdown.netAmount / validatedAmount) * 100).toFixed(1) : '80.0'}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                      <div
+                        className="h-full bg-[#C5A059] rounded-full transition-all"
+                        style={{ width: `${validatedAmount > 0 ? (financialBreakdown.netAmount / validatedAmount) * 100 : 80}%` }}
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
-                        <tr>
-                          <th className="py-2.5 px-3">N° Commande</th>
-                          <th className="py-2.5 px-3">Client</th>
-                          <th className="py-2.5 px-3">Destination</th>
-                          <th className="py-2.5 px-3 text-right">CA Brut</th>
-                          <th className="py-2.5 px-3 text-right text-rose-600">TVA (5%)</th>
-                          <th className="py-2.5 px-3 text-right text-blue-600">Livreur</th>
-                          <th className="py-2.5 px-3 text-right text-emerald-700">Net OrA</th>
-                          <th className="py-2.5 px-3">Livreur Assigné</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {financialBreakdown.detailedCourses.map((item) => (
-                          <tr key={item.order.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-2 px-3 font-mono font-bold text-slate-900">
-                              #{item.order.id}
-                            </td>
-                            <td className="py-2 px-3">
-                              <span className="font-semibold text-slate-800 block">{item.order.buyerName || 'Client'}</span>
-                            </td>
-                            <td className="py-2 px-3">
-                              <span className="font-medium text-slate-700 block truncate max-w-[150px]">{item.order.shippingAddress}</span>
-                              <span className="text-[10px] bg-slate-200/80 text-slate-700 px-1.5 py-0.2 rounded font-semibold inline-block">
-                                {item.zoneName}
-                              </span>
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                              {formatFCFA(item.order.total)}
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono font-semibold text-rose-600">
-                              -{formatFCFA(item.tva)}
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono font-semibold text-blue-600">
-                              -{formatFCFA(item.commission)}
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono font-black text-emerald-700 bg-emerald-50/50">
-                              {formatFCFA(item.net)}
-                            </td>
-                            <td className="py-2 px-3 text-slate-600">
-                              {item.order.assignedDeliveryAgentName || 'Livreur flotte'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-[#57534E] font-semibold">Commissions Livreurs</span>
+                      <span className="font-mono text-[#1C1917] font-bold">
+                        {validatedAmount > 0 ? ((financialBreakdown.deliveryCommissions / validatedAmount) * 100).toFixed(1) : '15.0'}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                      <div
+                        className="h-full bg-[#8C7A68] rounded-full transition-all"
+                        style={{ width: `${validatedAmount > 0 ? (financialBreakdown.deliveryCommissions / validatedAmount) * 100 : 15}%` }}
+                      />
+                    </div>
                   </div>
-                )}
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-[#57534E] font-semibold">TVA Légale (5%)</span>
+                      <span className="font-mono text-[#1C1917] font-bold">
+                        {validatedAmount > 0 ? ((financialBreakdown.tva / validatedAmount) * 100).toFixed(1) : '5.0'}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                      <div
+                        className="h-full bg-[#C2B5A3] rounded-full transition-all"
+                        style={{ width: `${validatedAmount > 0 ? (financialBreakdown.tva / validatedAmount) * 100 : 5}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#F0EAE1] text-[10px] text-[#78716C] font-mono">
+                  Équilibre comptable 100% certifié
+                </div>
               </div>
 
             </div>
 
-            {/* Pied du 2ème Dashboard */}
-            <div className="bg-slate-100 px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
-              <span className="text-xs text-slate-500 font-medium">
-                Clôture automatique synchronisée avec les validations de remise
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsRevenueDashboardOpen(false)}
-                className="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-              >
-                Fermer le tableau
-              </button>
+            {/* GRAND LIVRE COMPTABLE DES VENTES (DATAGRID ÉLÉGANT) */}
+            <div className="bg-white border border-[#E7DECE] rounded-2xl p-5 space-y-4 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F0EAE1] pb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#1C1917] flex items-center gap-2">
+                    <span className="font-serif-luxury text-base">Grand Livre des Écritures & Répartitions</span>
+                    <span className="text-xs font-mono font-normal text-[#78716C] bg-[#F5F0E6] px-2 py-0.5 rounded-md border border-[#E3D8C8]">
+                      {filteredRevenueCourses.length} écriture{filteredRevenueCourses.length > 1 ? 's' : ''}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[#78716C] mt-0.5">
+                    Détail ligne par ligne avec affectation de la TVA et commission de remise
+                  </p>
+                </div>
+
+                {/* Filtres de Recherche et Zone */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-[#8C7A68] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher n°, client, livreur..."
+                      value={revenueSearchQuery}
+                      onChange={(e) => setRevenueSearchQuery(e.target.value)}
+                      className="text-xs bg-[#FAF7F2] border border-[#E3D8C8] rounded-xl pl-8 pr-3 py-1.5 text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#C5A059] w-48 sm:w-60"
+                    />
+                  </div>
+
+                  <select
+                    value={revenueZoneFilter}
+                    onChange={(e) => setRevenueZoneFilter(e.target.value as any)}
+                    className="text-xs bg-[#FAF7F2] border border-[#E3D8C8] rounded-xl px-2.5 py-1.5 text-[#1C1917] focus:outline-none focus:border-[#C5A059]"
+                  >
+                    <option value="all">Toutes les zones</option>
+                    <option value="cotonou">Cotonou (500F)</option>
+                    <option value="calavi">Calavi / Godomey (800F)</option>
+                    <option value="plusloin">Plus Loin (1 000F)</option>
+                  </select>
+                </div>
+              </div>
+
+              {filteredRevenueCourses.length === 0 ? (
+                <div className="p-12 text-center text-[#78716C] text-xs bg-[#FAF7F2] rounded-xl space-y-2 border border-[#E7DECE]">
+                  <Package className="w-8 h-8 text-[#A8A29E] mx-auto" />
+                  <p className="font-semibold text-[#1C1917]">Aucune écriture comptable correspondant à ces critères.</p>
+                  <p className="text-[#78716C]">Les commandes confirmées et livrées s'affichent automatiquement ici.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-[#E7DECE]">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#F5F0E6] text-[#44403C] font-semibold border-b border-[#E7DECE]">
+                      <tr>
+                        <th className="py-3 px-3.5">N° Commande</th>
+                        <th className="py-3 px-3.5">Date</th>
+                        <th className="py-3 px-3.5">Client</th>
+                        <th className="py-3 px-3.5">Destination & Zone</th>
+                        <th className="py-3 px-3.5 text-right font-mono">CA Brut</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-[#78716C]">TVA (5%)</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-[#78716C]">Commission Livreur</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-[#1C1917]">Net OrA</th>
+                        <th className="py-3 px-3.5">Livreur Exécutant</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F0EAE1]">
+                      {filteredRevenueCourses.map((item) => (
+                        <tr key={item.order.id} className="hover:bg-[#FAF7F2] transition-colors">
+                          <td className="py-2.5 px-3.5 font-mono font-bold text-[#8C6D28]">
+                            #{item.order.id}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-[#78716C] whitespace-nowrap">
+                            {item.order.date}
+                          </td>
+                          <td className="py-2.5 px-3.5">
+                            <span className="font-semibold text-[#1C1917] block">{item.order.buyerName || 'Client'}</span>
+                            <span className="text-[10px] text-[#78716C] font-mono">{item.order.buyerPhone || item.order.buyerEmail || ''}</span>
+                          </td>
+                          <td className="py-2.5 px-3.5 max-w-[200px]">
+                            <span className="text-[#44403C] block truncate">{item.order.shippingAddress}</span>
+                            <span className="text-[10px] bg-[#F5F0E6] text-[#78716C] px-1.5 py-0.2 rounded font-semibold inline-block border border-[#E3D8C8] mt-0.5">
+                              {item.zoneName} ({item.commission} F)
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right font-mono font-bold text-[#1C1917] whitespace-nowrap">
+                            {formatFCFA(item.order.total)}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-[#78716C] whitespace-nowrap">
+                            -{formatFCFA(item.tva)}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-[#78716C] whitespace-nowrap">
+                            -{formatFCFA(item.commission)}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right font-mono font-black text-[#1C1917] whitespace-nowrap bg-[#FDF9F0]">
+                            {formatFCFA(item.net)}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-[#44403C] whitespace-nowrap">
+                            <span className="flex items-center gap-1.5">
+                              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>{item.order.assignedDeliveryAgentName || 'Livreur flotte'}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-[#F5F0E6] font-semibold border-t-2 border-[#D8CABA] text-[#1C1917]">
+                      <tr>
+                        <td colSpan={4} className="py-3 px-3.5 text-xs uppercase tracking-wider font-bold">
+                          Totaux ({filteredRevenueCourses.length} commande{filteredRevenueCourses.length > 1 ? 's' : ''})
+                        </td>
+                        <td className="py-3 px-3.5 text-right font-mono font-black text-[#1C1917] text-xs">
+                          {formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.order.total, 0))}
+                        </td>
+                        <td className="py-3 px-3.5 text-right font-mono font-bold text-[#78716C] text-xs">
+                          -{formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.tva, 0))}
+                        </td>
+                        <td className="py-3 px-3.5 text-right font-mono font-bold text-[#78716C] text-xs">
+                          -{formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.commission, 0))}
+                        </td>
+                        <td className="py-3 px-3.5 text-right font-mono font-black text-[#1C1917] text-xs bg-[#FAF7F2]">
+                          {formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.net, 0))}
+                        </td>
+                        <td className="py-3 px-3.5" />
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
 
           </div>
+
+          {/* Footer de Clôture Bas de Page */}
+          <footer className="bg-[#FAF7F2] border-t border-[#ECE4D8] px-6 py-3.5 flex items-center justify-between shrink-0 text-xs text-[#78716C]">
+            <span className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Clôture synchronisée avec la vérification des codes secrets de remise</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsRevenueDashboardOpen(false)}
+              className="px-4 py-2 bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+            >
+              Fermer le tableau
+            </button>
+          </footer>
+
         </div>
       )}
 
