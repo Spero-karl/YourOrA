@@ -88,7 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Mon profil"
               >
                 <div className="w-5 h-5 rounded-full bg-[#1C1917] text-[#FAF7F2] flex items-center justify-center text-[10px] font-semibold">
-                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'K'}
+                  {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <span className="text-[11px] sm:text-xs font-medium text-[#292524]">
                   {userProfile.name}

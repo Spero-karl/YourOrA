@@ -38,83 +38,33 @@ const GUEST_PROFILE: UserProfile = {
   isAdmin: false
 };
 
-const INITIAL_DELIVERY_AGENTS: DeliveryAgent[] = [
-  {
-    id: 'LIVREUR-COTONOU',
-    name: 'Marc Dossou',
-    phone: '+229 01 97 12 34 56',
-    zone: 'Cotonou (Haie Vive, Cadjèhoun, Fidjrossè)',
-    status: 'active',
-    completedDeliveries: 18,
-    rating: 4.9,
-    joinedDate: '15 Janvier 2026'
-  },
-  {
-    id: 'LIVREUR-CALAVI',
-    name: 'Roland Houessou',
-    phone: '+229 01 96 45 67 89',
-    zone: 'Abomey-Calavi & Godomey',
-    status: 'active',
-    completedDeliveries: 24,
-    rating: 5.0,
-    joinedDate: '02 Février 2026'
-  },
-  {
-    id: 'LIVREUR-PORTO-NOVO',
-    name: 'Aurel Tossou',
-    phone: '+229 01 95 23 45 67',
-    zone: 'Porto-Novo & Akpakpa',
-    status: 'active',
-    completedDeliveries: 12,
-    rating: 4.8,
-    joinedDate: '20 Février 2026'
+// One-time total wipe to guarantee a completely clean slate with zero prior data
+const CLEAN_SLATE_KEY = 'ora_clean_reset_v4_adminfull';
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    if (window.localStorage.getItem('ora_wipe_version') !== CLEAN_SLATE_KEY) {
+      window.localStorage.removeItem('ora_user_session');
+      window.localStorage.removeItem('ora_orders');
+      window.localStorage.removeItem('ora_chat_messages');
+      window.localStorage.removeItem('ora_cart');
+      window.localStorage.removeItem('ora_delivery_agents');
+      window.localStorage.removeItem('ora_delivery_notifications');
+      window.localStorage.removeItem('ora_secure_accounts_v3');
+      window.localStorage.removeItem('ora_secure_accounts_v2');
+      window.localStorage.removeItem('ora_secure_accounts_v1');
+      window.localStorage.removeItem('ora_secure_accounts_v4');
+      window.localStorage.removeItem('ora_delivery_login');
+      window.localStorage.setItem('ora_wipe_version', CLEAN_SLATE_KEY);
+    }
+  } catch {
+    // ignore
   }
-];
+}
 
-const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
-  {
-    id: 'msg-welcome-karl',
-    clientId: 'user-karl',
-    sender: 'concierge',
-    senderName: 'Conciergerie YourOrA',
-    text: 'Bonjour Karl Spero. Votre commande d’horlogerie a bien été enregistrée et transmise à notre atelier.',
-    timestamp: '10:00'
-  },
-  {
-    id: 'msg-karl-1',
-    clientId: 'user-karl',
-    sender: 'user',
-    senderName: 'Karl Spero',
-    text: 'Bonjour, ma montre automatique est-elle prête pour livraison à la Haie Vive ?',
-    timestamp: '10:15'
-  },
-  {
-    id: 'msg-reply-1',
-    clientId: 'user-karl',
-    sender: 'admin',
-    senderName: '👑 Administrateur YourOrA',
-    text: 'Bonjour M. Spero. Votre colis est conditionné dans son écrin de luxe et remis à notre coursier. Le code secret vous sera demandé à la remise.',
-    timestamp: '10:20',
-    isAdminReply: true
-  },
-  {
-    id: 'msg-client-2',
-    clientId: 'cli-calavi-402',
-    sender: 'user',
-    senderName: 'Mireille Tossou',
-    text: 'Bonjour, le paiement Moov Money est-il bien validé pour mon flacon de Santal & Ambre ?',
-    timestamp: '11:05'
-  },
-  {
-    id: 'msg-reply-2',
-    clientId: 'cli-calavi-402',
-    sender: 'admin',
-    senderName: '👑 Administrateur YourOrA',
-    text: 'Bonjour Mme Tossou. Votre paiement sous séquestre a bien été confirmé par FedaPay. La livraison à Abomey-Calavi est programmée pour cet après-midi.',
-    timestamp: '11:10',
-    isAdminReply: true
-  }
-];
+const INITIAL_DELIVERY_AGENTS: DeliveryAgent[] = [];
+
+const INITIAL_CHAT_MESSAGES: ChatMessage[] = [];
+
 
 export default function App() {
   const isOnline = useOnlineStatus();
@@ -223,13 +173,24 @@ export default function App() {
     }
   });
 
-  const [currentDeliveryAgentId, setCurrentDeliveryAgentId] = useState<string>('LIVREUR-COTONOU');
+  const [currentDeliveryAgentId, setCurrentDeliveryAgentId] = useState<string>('');
 
   const currentDeliveryAgent = useMemo(() => {
+    if (deliveryAgents.length === 0) {
+      return {
+        id: 'LIVREUR-BENIN',
+        name: 'Flotte OrA Express',
+        phone: '+229 01 00 00 00',
+        zone: 'Bénin (National)',
+        status: 'active' as const,
+        completedDeliveries: 0,
+        rating: 5.0,
+        joinedDate: 'Nouveau'
+      };
+    }
     return (
       deliveryAgents.find((a) => a.id === currentDeliveryAgentId) ||
-      deliveryAgents[0] ||
-      INITIAL_DELIVERY_AGENTS[0]
+      deliveryAgents[0]
     );
   }, [deliveryAgents, currentDeliveryAgentId]);
 

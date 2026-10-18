@@ -325,7 +325,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const accountName =
         userMessage?.senderName ||
         matchedOrder?.buyerName ||
-        (cid === 'user-karl' ? 'Karl Spero' : `Compte Client ${cid.slice(-4)}`);
+        (cid.startsWith('cli-') ? `Client #${cid.slice(-4)}` : `Client ${cid}`);
 
       const existing = map.get(cid);
 
@@ -917,38 +917,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 ))}
                               </select>
                             )}
-                            {isDelivered && (
-                              <p className="text-[10px] text-slate-400 italic">
-                                Livreur verrouillé après livraison du produit
-                              </p>
-                            )}
                           </div>
 
-                          {/* Statuts & Séquestre : validation UNIQUEMENT par code secret livreur */}
-                          <div className="pt-1 space-y-1.5">
+                          {/* Code secret de remise & Statut */}
+                          <div className="pt-1">
                             {!isDelivered ? (
-                              <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-lg p-2 text-xs text-[#57534E] flex items-start gap-2">
-                                <KeyRound className="w-3.5 h-3.5 text-[#C5A059] shrink-0 mt-0.5" />
-                                <div className="space-y-0.5 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-[11px] text-[#1C1917]">Validation par code secret</span>
-                                    <span className="text-[10px] font-mono bg-white px-1.5 py-0.2 rounded border border-[#E7DECE] font-bold text-[#8C6D28]">
-                                      {ord.deliveryCode || '••••'}
-                                    </span>
-                                  </div>
-                                  <p className="text-[10px] text-[#78716C] leading-snug">
-                                    L'admin ne valide pas la livraison : le client remet ce code au livreur, qui le saisit pour valider la livraison.
-                                  </p>
-                                </div>
+                              <div className="bg-slate-50 border border-slate-200/90 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs">
+                                <span className="flex items-center gap-1.5 text-slate-600 font-medium text-[11px]">
+                                  <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                  <span>Code secret :</span>
+                                </span>
+                                <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
+                                  {ord.deliveryCode || '••••'}
+                                </span>
                               </div>
                             ) : (
-                              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-lg px-2.5 py-1.5 text-xs text-emerald-900 flex items-center justify-between gap-2">
-                                <span className="flex items-center gap-1.5 font-bold text-[11px]">
+                              <div className="bg-emerald-50 border border-emerald-200/80 rounded-lg px-2.5 py-2 text-xs text-emerald-800 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5 font-semibold text-[11px]">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                  <span>Livraison validée par code</span>
+                                  <span>Commande livrée</span>
                                 </span>
-                                <span className="text-[10px] font-mono bg-white px-1.5 py-0.2 rounded border border-emerald-200 font-bold text-emerald-800">
-                                  Fonds débloqués
+                                <span className="text-[10px] font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 font-bold text-emerald-800">
+                                  Encaissée
                                 </span>
                               </div>
                             )}
@@ -957,9 +947,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onResolveDispute(ord.id, 'release_to_seller')}
-                                className="w-full py-1 px-2 rounded bg-[#1C1917] hover:bg-[#292524] text-white font-bold text-[11px] transition-colors cursor-pointer"
+                                className="w-full mt-2 py-1 px-2 rounded bg-slate-900 hover:bg-black text-white font-bold text-[11px] transition-colors cursor-pointer"
                               >
-                                Résoudre litige (Médiation Admin)
+                                Résoudre litige
                               </button>
                             )}
                           </div>
@@ -987,7 +977,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Flotte des Livreurs Partenaires au Bénin</h3>
                 <p className="text-xs text-slate-500">
-                  L'admin pré-enregistre les livreurs par leur <strong>login officiel</strong> (sans mot de passe). Le livreur crée ensuite son mot de passe avec ce même login.
+                  Gestion des coursiers et des affectations de livraison par zone.
                 </p>
               </div>
               <button
@@ -1219,7 +1209,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <MessageSquare className="w-7 h-7 text-slate-300 mx-auto" />
                     <p className="font-semibold text-slate-700">Aucun message pour l'instant</p>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Dès qu'un client ayant payé une commande (ex: Ata, Assoude) écrit à l'assistance, son compte apparaîtra automatiquement ici pour que vous puissiez lui répondre.
+                      Les conversations avec vos clients s'afficheront ici.
                     </p>
                   </div>
                 ) : (
@@ -1434,30 +1424,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </p>
                     </div>
 
-                    {/* 3 Cartes de fonctionnalités WhatsApp Web */}
+                    {/* 3 Cartes de fonctionnalités */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full text-left pt-1">
                       <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
                         <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-1.5">
                           <ShieldCheck className="w-3.5 h-3.5" />
                         </div>
-                        <p className="text-[11px] font-bold text-slate-800">Canal Vérifié</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Seuls les clients avec commande payée peuvent écrire</p>
+                        <p className="text-[11px] font-bold text-slate-800">Assistance Directe</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Échangez en direct avec vos clients</p>
                       </div>
 
                       <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
                         <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center mb-1.5">
-                          <Timer className="w-3.5 h-3.5" />
+                          <Lock className="w-3.5 h-3.5" />
                         </div>
-                        <p className="text-[11px] font-bold text-slate-800">Purge 24h</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Suppression automatique 24h après livraison validée</p>
+                        <p className="text-[11px] font-bold text-slate-800">Séquestre Sécurisé</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Protection des transactions et commandes</p>
                       </div>
 
                       <div className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-                        <div className="w-6 h-6 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center mb-1.5">
+                        <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center mb-1.5">
                           <CheckCheck className="w-3.5 h-3.5" />
                         </div>
-                        <p className="text-[11px] font-bold text-slate-800">1 Clic Rapide</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Réponses types pour livreur en route ou colis prêt</p>
+                        <p className="text-[11px] font-bold text-slate-800">Réponses Rapides</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">Messages prédéfinis pour le suivi</p>
                       </div>
                     </div>
 
@@ -1514,7 +1504,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] text-[#78716C] hidden sm:block">
-                    Répartition officielle YourOrA Bénin (TVA 5% • Barème courses livreurs • Marge nette marchand)
+                    Grand livre des ventes, TVA et commissions livreurs
                   </p>
                 </div>
               </div>
@@ -1557,72 +1547,78 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* Corps Scrollable Plein Écran aux teintes chaleureuses du template */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 bg-[#FAF7F2]">
             
-            {/* 4 PÔLES FINANCIERS CLÉS (DESIGN SOBRE ET ÉLÉGANT TEMPLATE APP) */}
+            {/* 4 PÔLES FINANCIERS CLÉS (COULEURS ÉQUILIBRÉES ET PROFESSIONNELLES) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               
               {/* 1. CA Brut */}
-              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition-all">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                  <div className="flex items-center justify-between text-xs text-slate-600 font-semibold mb-2">
                     <span className="flex items-center gap-1.5">
-                      <DollarSign className="w-4 h-4 text-[#C5A059]" />
-                      Chiffre d'Affaires Brut
+                      <span className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <DollarSign className="w-3.5 h-3.5" />
+                      </span>
+                      <span>Chiffre d'Affaires Brut</span>
                     </span>
-                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
-                      100.0%
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                      100%
                     </span>
                   </div>
-                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#1C1917] tracking-tight">
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                     {formatFCFA(validatedAmount)}
                   </p>
                 </div>
-                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
+                <div className="pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
                   <span>{validatedOrdersCount} commande{validatedOrdersCount > 1 ? 's' : ''} livrée{validatedOrdersCount > 1 ? 's' : ''}</span>
-                  <span className="font-mono text-[#8C7A68]">Bénin XOF</span>
+                  <span className="font-mono text-slate-600">Bénin XOF</span>
                 </div>
               </div>
 
-              {/* 2. TVA 5% */}
-              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+              {/* 2. TVA Légale (5%) */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-all">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                  <div className="flex items-center justify-between text-xs text-slate-600 font-semibold mb-2">
                     <span className="flex items-center gap-1.5">
-                      <Percent className="w-4 h-4 text-[#8C7A68]" />
-                      TVA Légale (5%)
+                      <span className="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <Percent className="w-3.5 h-3.5" />
+                      </span>
+                      <span>TVA Légale (5%)</span>
                     </span>
-                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                    <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
                       5% Fixe
                     </span>
                   </div>
-                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#44403C] tracking-tight">
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-amber-900 tracking-tight">
                     {formatFCFA(financialBreakdown.tva)}
                   </p>
                 </div>
-                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
+                <div className="pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
                   <span>Provisions fiscales réservées</span>
-                  <span className="text-[#8C7A68] font-mono">DGI Bénin</span>
+                  <span className="text-amber-800 font-mono font-medium">DGI Bénin</span>
                 </div>
               </div>
 
               {/* 3. Commissions Livreurs */}
-              <div className="bg-white rounded-2xl border border-[#E7DECE] p-5 shadow-xs flex flex-col justify-between hover:border-[#D0C0AC] transition-all">
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between hover:border-blue-300 transition-all">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-[#78716C] font-semibold mb-2">
+                  <div className="flex items-center justify-between text-xs text-slate-600 font-semibold mb-2">
                     <span className="flex items-center gap-1.5">
-                      <Truck className="w-4 h-4 text-[#8C7A68]" />
-                      Commissions Livreurs
+                      <span className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <Truck className="w-3.5 h-3.5" />
+                      </span>
+                      <span>Commissions Livreurs</span>
                     </span>
-                    <span className="bg-[#F5F0E6] text-[#78716C] border border-[#E3D8C8] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
+                    <span className="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
                       Au barème
                     </span>
                   </div>
-                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-[#44403C] tracking-tight">
+                  <p className="font-mono text-2xl sm:text-3xl font-extrabold text-blue-950 tracking-tight">
                     {formatFCFA(financialBreakdown.deliveryCommissions)}
                   </p>
                 </div>
-                <div className="pt-3 mt-3 border-t border-[#F0EAE1] text-[11px] text-[#78716C] flex items-center justify-between">
-                  <span>{financialBreakdown.detailedCourses.length} course{financialBreakdown.detailedCourses.length > 1 ? 's' : ''} indemnisée{financialBreakdown.detailedCourses.length > 1 ? 's' : ''}</span>
-                  <span className="text-[#8C7A68] font-mono">500 / 800 / 1000F</span>
+                <div className="pt-3 mt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                  <span>{financialBreakdown.detailedCourses.length} course{financialBreakdown.detailedCourses.length > 1 ? 's' : ''}</span>
+                  <span className="text-blue-800 font-mono font-medium">500 / 800 / 1000F</span>
                 </div>
               </div>
 
@@ -1631,8 +1627,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <div className="flex items-center justify-between text-xs text-[#8C6D28] font-bold mb-2">
                     <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-[#C5A059]" />
-                      Bénéfice Net OrA
+                      <span className="w-6 h-6 rounded-md bg-[#F5EEDB] text-[#8C6D28] flex items-center justify-center">
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </span>
+                      <span>Bénéfice Net OrA</span>
                     </span>
                     <span className="bg-[#F5EEDB] text-[#8C6D28] border border-[#E0D0AB] px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">
                       {validatedAmount > 0 ? ((financialBreakdown.netAmount / validatedAmount) * 100).toFixed(1) : '0.0'}%
@@ -1643,8 +1641,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </p>
                 </div>
                 <div className="pt-3 mt-3 border-t border-[#F0E4CE] text-[11px] text-[#8C6D28] flex items-center justify-between font-medium">
-                  <span>Solde net marchand consolidé</span>
-                  <span className="text-[#15803D] font-bold font-mono">Clôturé</span>
+                  <span>Solde net marchand</span>
+                  <span className="text-emerald-700 font-bold font-mono">Clôturé</span>
                 </div>
               </div>
 
@@ -1675,41 +1673,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                   
                   {/* Zone 1 : Cotonou */}
-                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                  <div className="bg-[#FAF7F2] border border-emerald-200/80 rounded-xl p-4 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[11px] font-bold text-[#44403C] block">Courses dans Cotonou</span>
-                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">500 FCFA</p>
-                      <p className="text-[10px] text-[#78716C] mt-0.5">Haie Vive, Cadjèhoun, Fidjrossè, Ganhi</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-800">Cotonou</span>
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-mono">500 F</span>
+                      </div>
+                      <p className="text-xl font-extrabold font-mono text-slate-900 mt-1">500 FCFA</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Haie Vive, Cadjèhoun, Fidjrossè, Ganhi</p>
                     </div>
-                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
-                      <span className="text-[#78716C]">{financialBreakdown.cotonouCourses} course{financialBreakdown.cotonouCourses > 1 ? 's' : ''}</span>
-                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.cotonouCourses * 500)}</span>
+                    <div className="pt-2 border-t border-emerald-200/50 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{financialBreakdown.cotonouCourses} course{financialBreakdown.cotonouCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-emerald-800">{formatFCFA(financialBreakdown.cotonouCourses * 500)}</span>
                     </div>
                   </div>
 
                   {/* Zone 2 : Calavi & Godomey */}
-                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                  <div className="bg-[#FAF7F2] border border-blue-200/80 rounded-xl p-4 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[11px] font-bold text-[#44403C] block">Calavi / Godomey</span>
-                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">800 FCFA</p>
-                      <p className="text-[10px] text-[#78716C] mt-0.5">Abomey-Calavi, Godomey, Tankpè, Akassato</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-800">Calavi & Godomey</span>
+                        <span className="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-mono">800 F</span>
+                      </div>
+                      <p className="text-xl font-extrabold font-mono text-slate-900 mt-1">800 FCFA</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Abomey-Calavi, Godomey, Tankpè, Akassato</p>
                     </div>
-                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
-                      <span className="text-[#78716C]">{financialBreakdown.calaviGodomeyCourses} course{financialBreakdown.calaviGodomeyCourses > 1 ? 's' : ''}</span>
-                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.calaviGodomeyCourses * 800)}</span>
+                    <div className="pt-2 border-t border-blue-200/50 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{financialBreakdown.calaviGodomeyCourses} course{financialBreakdown.calaviGodomeyCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-blue-800">{formatFCFA(financialBreakdown.calaviGodomeyCourses * 800)}</span>
                     </div>
                   </div>
 
                   {/* Zone 3 : Plus Loin */}
-                  <div className="bg-[#FAF7F2] border border-[#E7DECE] rounded-xl p-4 flex flex-col justify-between space-y-2">
+                  <div className="bg-[#FAF7F2] border border-amber-200/80 rounded-xl p-4 flex flex-col justify-between space-y-2">
                     <div>
-                      <span className="text-[11px] font-bold text-[#44403C] block">Plus Loin / Périphérie</span>
-                      <p className="text-xl font-extrabold font-mono text-[#1C1917] mt-1">1 000 FCFA</p>
-                      <p className="text-[10px] text-[#78716C] mt-0.5">Porto-Novo, Ouidah, Sèmè-Kpodji & Environs</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-800">Plus Loin / Périphérie</span>
+                        <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-mono">1 000 F</span>
+                      </div>
+                      <p className="text-xl font-extrabold font-mono text-slate-900 mt-1">1 000 FCFA</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Porto-Novo, Ouidah, Sèmè-Kpodji & Environs</p>
                     </div>
-                    <div className="pt-2 border-t border-[#E7DECE] flex items-center justify-between text-xs">
-                      <span className="text-[#78716C]">{financialBreakdown.plusLoinCourses} course{financialBreakdown.plusLoinCourses > 1 ? 's' : ''}</span>
-                      <span className="font-mono font-bold text-[#1C1917]">{formatFCFA(financialBreakdown.plusLoinCourses * 1000)}</span>
+                    <div className="pt-2 border-t border-amber-200/50 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{financialBreakdown.plusLoinCourses} course{financialBreakdown.plusLoinCourses > 1 ? 's' : ''}</span>
+                      <span className="font-mono font-bold text-amber-800">{formatFCFA(financialBreakdown.plusLoinCourses * 1000)}</span>
                     </div>
                   </div>
 
@@ -1730,14 +1737,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="space-y-3 flex-1 flex flex-col justify-center">
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#8C6D28] font-semibold">Boutique OrA (Net)</span>
-                      <span className="font-mono text-[#8C6D28] font-bold">
+                      <span className="text-emerald-800 font-semibold">Boutique OrA (Net)</span>
+                      <span className="font-mono text-emerald-800 font-bold">
                         {validatedAmount > 0 ? ((financialBreakdown.netAmount / validatedAmount) * 100).toFixed(1) : '80.0'}%
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                       <div
-                        className="h-full bg-[#C5A059] rounded-full transition-all"
+                        className="h-full bg-emerald-600 rounded-full transition-all"
                         style={{ width: `${validatedAmount > 0 ? (financialBreakdown.netAmount / validatedAmount) * 100 : 80}%` }}
                       />
                     </div>
@@ -1745,14 +1752,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#57534E] font-semibold">Commissions Livreurs</span>
-                      <span className="font-mono text-[#1C1917] font-bold">
+                      <span className="text-blue-800 font-semibold">Commissions Livreurs</span>
+                      <span className="font-mono text-blue-800 font-bold">
                         {validatedAmount > 0 ? ((financialBreakdown.deliveryCommissions / validatedAmount) * 100).toFixed(1) : '15.0'}%
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                       <div
-                        className="h-full bg-[#8C7A68] rounded-full transition-all"
+                        className="h-full bg-blue-600 rounded-full transition-all"
                         style={{ width: `${validatedAmount > 0 ? (financialBreakdown.deliveryCommissions / validatedAmount) * 100 : 15}%` }}
                       />
                     </div>
@@ -1760,14 +1767,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#57534E] font-semibold">TVA Légale (5%)</span>
-                      <span className="font-mono text-[#1C1917] font-bold">
+                      <span className="text-amber-800 font-semibold">TVA Légale (5%)</span>
+                      <span className="font-mono text-amber-800 font-bold">
                         {validatedAmount > 0 ? ((financialBreakdown.tva / validatedAmount) * 100).toFixed(1) : '5.0'}%
                       </span>
                     </div>
-                    <div className="h-2 w-full bg-[#F3ECE0] rounded-full overflow-hidden border border-[#E3D8C8]">
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                       <div
-                        className="h-full bg-[#C2B5A3] rounded-full transition-all"
+                        className="h-full bg-amber-500 rounded-full transition-all"
                         style={{ width: `${validatedAmount > 0 ? (financialBreakdown.tva / validatedAmount) * 100 : 5}%` }}
                       />
                     </div>
@@ -1837,10 +1844,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <th className="py-3 px-3.5">Date</th>
                         <th className="py-3 px-3.5">Client</th>
                         <th className="py-3 px-3.5">Destination & Zone</th>
-                        <th className="py-3 px-3.5 text-right font-mono">CA Brut</th>
-                        <th className="py-3 px-3.5 text-right font-mono text-[#78716C]">TVA (5%)</th>
-                        <th className="py-3 px-3.5 text-right font-mono text-[#78716C]">Commission Livreur</th>
-                        <th className="py-3 px-3.5 text-right font-mono text-[#1C1917]">Net OrA</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-slate-900">CA Brut</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-amber-800">TVA (5%)</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-blue-800">Commission Livreur</th>
+                        <th className="py-3 px-3.5 text-right font-mono text-emerald-800">Net OrA</th>
                         <th className="py-3 px-3.5">Livreur Exécutant</th>
                       </tr>
                     </thead>
@@ -1863,16 +1870,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               {item.zoneName} ({item.commission} F)
                             </span>
                           </td>
-                          <td className="py-2.5 px-3.5 text-right font-mono font-bold text-[#1C1917] whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                             {formatFCFA(item.order.total)}
                           </td>
-                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-[#78716C] whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-amber-800 whitespace-nowrap">
                             -{formatFCFA(item.tva)}
                           </td>
-                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-[#78716C] whitespace-nowrap">
+                          <td className="py-2.5 px-3.5 text-right font-mono font-medium text-blue-800 whitespace-nowrap">
                             -{formatFCFA(item.commission)}
                           </td>
-                          <td className="py-2.5 px-3.5 text-right font-mono font-black text-[#1C1917] whitespace-nowrap bg-[#FDF9F0]">
+                          <td className="py-2.5 px-3.5 text-right font-mono font-bold text-emerald-800 whitespace-nowrap bg-emerald-50/50">
                             {formatFCFA(item.net)}
                           </td>
                           <td className="py-2.5 px-3.5 text-[#44403C] whitespace-nowrap">
@@ -1889,16 +1896,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <td colSpan={4} className="py-3 px-3.5 text-xs uppercase tracking-wider font-bold">
                           Totaux ({filteredRevenueCourses.length} commande{filteredRevenueCourses.length > 1 ? 's' : ''})
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono font-black text-[#1C1917] text-xs">
+                        <td className="py-3 px-3.5 text-right font-mono font-black text-slate-900 text-xs">
                           {formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.order.total, 0))}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono font-bold text-[#78716C] text-xs">
+                        <td className="py-3 px-3.5 text-right font-mono font-bold text-amber-900 text-xs">
                           -{formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.tva, 0))}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono font-bold text-[#78716C] text-xs">
+                        <td className="py-3 px-3.5 text-right font-mono font-bold text-blue-900 text-xs">
                           -{formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.commission, 0))}
                         </td>
-                        <td className="py-3 px-3.5 text-right font-mono font-black text-[#1C1917] text-xs bg-[#FAF7F2]">
+                        <td className="py-3 px-3.5 text-right font-mono font-black text-emerald-950 text-xs bg-emerald-50/70">
                           {formatFCFA(filteredRevenueCourses.reduce((s, i) => s + i.net, 0))}
                         </td>
                         <td className="py-3 px-3.5" />
@@ -1915,7 +1922,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <footer className="bg-[#FAF7F2] border-t border-[#ECE4D8] px-6 py-3.5 flex items-center justify-between shrink-0 text-xs text-[#78716C]">
             <span className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Clôture synchronisée avec la vérification des codes secrets de remise</span>
+              <span>Grand livre des écritures financières • Clôture comptable</span>
             </span>
             <button
               type="button"

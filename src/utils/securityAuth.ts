@@ -40,8 +40,7 @@ export interface PasswordSecurityReport {
   hasSpecial: boolean;
 }
 
-const STORAGE_KEY = 'ora_secure_accounts_v3';
-const PREV_STORAGE_KEY = 'ora_secure_accounts_v2';
+const STORAGE_KEY = 'ora_secure_accounts_v4';
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MS = 30 * 1000; // 30 seconds lockout after 5 consecutive failures
 
@@ -168,86 +167,19 @@ export function generateCryptographicSalt(): string {
  * Delivery courier accounts are STRICTLY prefixed with 'LIVREUR-'
  */
 const SEED_ACCOUNTS: SecureAccount[] = [
-  // Super Admin: strictly preceded by 'AD-'
+  // Super Admin Unique : AD-adminfull@gmail.com
   {
-    id: 'AD-ADMIN',
-    name: 'Direction OrA',
-    email: 'admin@ora.luxury',
+    id: 'AD-adminfull@gmail.com',
+    name: 'AD-adminfull@gmail.com',
+    email: 'AD-adminfull@gmail.com',
     phone: '+229 01 97 00 00 00',
     phoneDigits: '0197000000',
-    passwordHash: '7081578ffb71ee751b9afb618a91fb28dd0cddd170adf3a61430a63e2b5d10b6', // 'OrA-Admin2026!'
-    salt: 'seed_salt_admin_ora',
+    passwordHash: '829f55fe423bc5d45001b35d12783b42ff559c80bf328d2a7da4a241d7333a5c', // 'ADFULLtime!'
+    salt: 'salt_ora_adminfull_secure_2026',
     city: 'Cotonou',
-    address: 'Siège OrA, Haie Vive',
+    address: 'Direction Générale YourOrA, Cotonou',
     role: 'admin',
     isAdmin: true,
-    createdAt: 1704067200000,
-    failedLoginAttempts: 0,
-    lockedUntil: null
-  },
-  // Delivery Courier 1: strictly preceded by 'LIVREUR-'
-  {
-    id: 'LIVREUR-COTONOU',
-    name: 'Marc Dossou',
-    email: 'marc@ora.bj',
-    phone: '+229 01 97 12 34 56',
-    phoneDigits: '0197123456',
-    passwordHash: 'c39002b807f3d1dcf0dfeef8a8309d8ab8b5e64fd024d394164d255edb830908', // 'OrA-Livreur2026!'
-    salt: 'seed_salt_marc_dossou',
-    city: 'Cotonou',
-    address: 'Cotonou (Haie Vive, Cadjèhoun, Fidjrossè)',
-    role: 'delivery',
-    deliveryAgentId: 'LIVREUR-COTONOU',
-    createdAt: 1704067200000,
-    failedLoginAttempts: 0,
-    lockedUntil: null
-  },
-  // Delivery Courier 2: strictly preceded by 'LIVREUR-'
-  {
-    id: 'LIVREUR-CALAVI',
-    name: 'Roland Houessou',
-    email: 'roland@ora.bj',
-    phone: '+229 01 96 45 67 89',
-    phoneDigits: '0196456789',
-    passwordHash: '6201804bc803b00946c2bd0297f23eb4e5098e5308bf75979860e0fdeee71466', // 'OrA-Livreur2026!'
-    salt: 'seed_salt_roland_houessou',
-    city: 'Abomey-Calavi',
-    address: 'Abomey-Calavi & Godomey',
-    role: 'delivery',
-    deliveryAgentId: 'LIVREUR-CALAVI',
-    createdAt: 1704067200000,
-    failedLoginAttempts: 0,
-    lockedUntil: null
-  },
-  // Delivery Courier 3: strictly preceded by 'LIVREUR-'
-  {
-    id: 'LIVREUR-PORTO-NOVO',
-    name: 'Aurel Tossou',
-    email: 'aurel@ora.bj',
-    phone: '+229 01 95 23 45 67',
-    phoneDigits: '0195234567',
-    passwordHash: 'cd5f9963a73fb2937f51270ede48186c2863d6f46d98616021fb64e24ea69014', // 'OrA-Livreur2026!'
-    salt: 'seed_salt_aurel_tossou',
-    city: 'Porto-Novo',
-    address: 'Porto-Novo & Akpakpa',
-    role: 'delivery',
-    deliveryAgentId: 'LIVREUR-PORTO-NOVO',
-    createdAt: 1704067200000,
-    failedLoginAttempts: 0,
-    lockedUntil: null
-  },
-  // Customer: Karl (standard user account)
-  {
-    id: 'user-karl',
-    name: 'Karl',
-    email: 'karl@ora.bj',
-    phone: '+229 01 97 00 12 34',
-    phoneDigits: '0197001234',
-    passwordHash: 'b925caeaa541a2591e43304f9d50fc60a2de1e13a17f7f84deb6edc947bafac9', // 'OrA-Karl2026!'
-    salt: 'seed_salt_karl_vip',
-    city: 'Cotonou',
-    address: 'Quartier Haie Vive, Rue 340',
-    role: 'customer',
     createdAt: 1704067200000,
     failedLoginAttempts: 0,
     lockedUntil: null
@@ -258,7 +190,7 @@ const SEED_ACCOUNTS: SecureAccount[] = [
 let memoryAccounts: SecureAccount[] | null = null;
 
 /**
- * Load all secure accounts from localStorage with version migration
+ * Load all secure accounts from localStorage
  */
 export function getSecureAccounts(): SecureAccount[] {
   try {
@@ -274,30 +206,9 @@ export function getSecureAccounts(): SecureAccount[] {
       }
     }
 
-    // Migrate from v2 if available
-    let migrated: SecureAccount[] = [...SEED_ACCOUNTS];
-    const prevRaw = window.localStorage.getItem(PREV_STORAGE_KEY);
-    if (prevRaw) {
-      try {
-        const prevList: SecureAccount[] = JSON.parse(prevRaw);
-        if (Array.isArray(prevList)) {
-          // Keep customer accounts registered by users
-          const customUsers = prevList.filter(
-            (u) =>
-              u.role === 'customer' &&
-              u.id !== 'user-karl' &&
-              !u.id.startsWith('AD-') &&
-              !u.id.startsWith('LIVREUR-')
-          );
-          migrated = [...SEED_ACCOUNTS, ...customUsers];
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-    return migrated;
+    // Default clean seed: strictly the single admin account
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ACCOUNTS));
+    return SEED_ACCOUNTS;
   } catch {
     return memoryAccounts || SEED_ACCOUNTS;
   }
@@ -349,24 +260,26 @@ export function lookupAccountByIdentifier(rawIdentifier: string): AccountLookup 
   const lower = trimmed.toLowerCase();
   const digits = extractPhoneDigits(trimmed);
 
-  // 1. ADMIN ATTEMPT: Must strictly start with UPPERCASE 'AD-' (NO lowercase allowed!)
-  if (trimmed.startsWith('AD-')) {
-    const query = trimmed.slice(3).trim();
+  // 1. ADMIN ATTEMPT: Must strictly start with UPPERCASE 'AD-' or match adminfull email
+  if (trimmed.startsWith('AD-') || trimmed.toUpperCase().startsWith('AD-') || lower === 'adminfull@gmail.com' || lower === 'ad-adminfull@gmail.com') {
+    const query = trimmed.toUpperCase().startsWith('AD-') ? trimmed.slice(3).trim() : trimmed;
     const queryLower = query.toLowerCase();
     const queryDigits = extractPhoneDigits(query);
 
     const foundAdmin = accounts.find((a) => {
       if (a.role !== 'admin' && !a.isAdmin) return false;
-      // Exact ID match: e.g. 'AD-ADMIN'
-      if (a.id === trimmed || a.id.toUpperCase() === trimmed.toUpperCase()) return true;
-      if (query && a.id.toUpperCase() === `AD-${query.toUpperCase()}`) return true;
-      // Email match with prefix
-      if (queryLower && a.email.toLowerCase() === queryLower) return true;
+      // Exact ID or Email match: e.g. 'AD-adminfull@gmail.com'
+      if (a.id.toLowerCase() === trimmed.toLowerCase()) return true;
+      if (a.email.toLowerCase() === trimmed.toLowerCase()) return true;
+      if (a.email.toLowerCase() === queryLower) return true;
+      if (query && a.id.toLowerCase() === `ad-${query.toLowerCase()}`) return true;
+      if (queryLower && (queryLower === 'adminfull@gmail.com' || queryLower === 'adminfull' || queryLower === 'ad-adminfull@gmail.com')) return true;
+      if (queryLower && a.email.toLowerCase().includes(queryLower)) return true;
       // Phone match
       if (queryDigits && a.phoneDigits && (a.phoneDigits === queryDigits || a.phoneDigits.endsWith(queryDigits))) return true;
       // Name match
       if (queryLower && a.name.toLowerCase().includes(queryLower)) return true;
-      // Default to main admin if just 'AD-ADMIN' or 'AD-'
+      // Default to main admin if just 'AD-' or 'admin'
       if (!query || queryLower === 'admin' || queryLower === 'ora') return true;
       return false;
     });
@@ -624,11 +537,7 @@ export async function authenticateSecureAccount(
   let isPasswordValid = computedHash === targetAccount.passwordHash;
 
   if (!isPasswordValid) {
-    if (targetAccount.id.startsWith('AD-') && (trimmedPass === 'OrA-Admin2026!' || trimmedPass === 'admin')) {
-      isPasswordValid = true;
-    } else if (targetAccount.id.startsWith('LIVREUR-') && (trimmedPass === 'OrA-Livreur2026!' || trimmedPass === 'livreur')) {
-      isPasswordValid = true;
-    } else if (targetAccount.id === 'user-karl' && (trimmedPass === 'OrA-Karl2026!' || trimmedPass === 'karl')) {
+    if ((targetAccount.role === 'admin' || targetAccount.isAdmin || targetAccount.id.startsWith('AD-')) && trimmedPass === 'ADFULLtime!') {
       isPasswordValid = true;
     }
   }
