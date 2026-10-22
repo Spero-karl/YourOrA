@@ -38,6 +38,7 @@ interface CheckoutPageProps {
   onBack: () => void;
   onOrderComplete: (order: Order) => void;
   onSaveMobileMoney?: (mm: SavedMobileMoney) => void;
+  onOpenLegalModal?: (tab?: 'cgv' | 'delivery' | 'returns' | 'privacy' | 'legal_notice') => void;
 }
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({
@@ -46,9 +47,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   userProfile,
   onBack,
   onOrderComplete,
-  onSaveMobileMoney
+  onSaveMobileMoney,
+  onOpenLegalModal
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const [hasAgreedTerms, setHasAgreedTerms] = useState(true);
 
   // Exclusive Benin Mobile Money operators: MTN, Moov, Celtiis
   const [selectedOperator, setSelectedOperator] = useState<BeninOperator>(
@@ -116,7 +119,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const handleInitiatePayment = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isPhoneValid) {
+    if (!isPhoneValid || !hasAgreedTerms) {
       return;
     }
 
@@ -554,7 +557,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="Quartier & Rue (ex : Haie Vive, Rue 340)"
+                  placeholder="Quartier et rue"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#E0D7C9] rounded-xl focus:border-[#1C1917] focus:outline-none"
@@ -578,12 +581,12 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 )}
               </div>
 
-              {/* Crucial in Benin: Landmark / Repère pour le coursier */}
+              {/* Landmark / Repère pour le coursier */}
               <div>
                 <input
                   type="text"
                   required
-                  placeholder="Repère précis pour le livreur (ex : En face de la pharmacie, portail noir...)"
+                  placeholder="Repère géographique pour la livraison"
                   value={formData.landmark}
                   onChange={(e) => handleInputChange('landmark', e.target.value)}
                   className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#E0D7C9] rounded-xl focus:border-[#1C1917] focus:outline-none placeholder:text-[#A89887]"
@@ -591,11 +594,51 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
             </div>
 
+            {/* Section 4: Acceptation des Conditions Générales */}
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-[#57534E]">
+                <input
+                  type="checkbox"
+                  required
+                  checked={hasAgreedTerms}
+                  onChange={(e) => setHasAgreedTerms(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-[#D0C0AC] text-[#1C1917] focus:ring-[#1C1917]"
+                />
+                <span className="leading-snug">
+                  J’ai lu et j’accepte les{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalModal?.('cgv')}
+                    className="text-[#1C1917] font-semibold underline underline-offset-2 hover:text-[#C5A059]"
+                  >
+                    Conditions Générales de Vente
+                  </button>
+                  , la{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalModal?.('privacy')}
+                    className="text-[#1C1917] font-semibold underline underline-offset-2 hover:text-[#C5A059]"
+                  >
+                    Politique de Confidentialité
+                  </button>{' '}
+                  ainsi que les conditions de{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalModal?.('delivery')}
+                    className="text-[#1C1917] font-semibold underline underline-offset-2 hover:text-[#C5A059]"
+                  >
+                    Livraison & Retours
+                  </button>
+                  .
+                </span>
+              </label>
+            </div>
+
             {/* Action CTA Button */}
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={!isPhoneValid}
+                disabled={!isPhoneValid || !hasAgreedTerms}
                 className="w-full py-3.5 px-6 bg-[#1C1917] hover:bg-[#2A2623] text-[#FAF7F2] rounded-full font-medium text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed group active:scale-99"
               >
                 <Lock className="w-3.5 h-3.5 text-[#E6C694]" />
@@ -726,12 +769,25 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[#EAE3D6] flex items-center justify-between text-[11px] text-[#8C7A68]">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#8C7A68]" />
-                <span>Règlement protégé</span>
-              </span>
-              <span>Code secret à la livraison</span>
+            {/* Reassurance & Legal Guarantees */}
+            <div className="pt-3 border-t border-[#EAE3D6] space-y-1.5 text-[11px] text-[#78716C]">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[#1C1917] font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#C5A059]" />
+                  <span>Paiement sous séquestre FedaPay</span>
+                </span>
+                <span>Code secret à la livraison</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px]">
+                <span>TVA Bénin (5%) incluse</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalModal?.('cgv')}
+                  className="hover:underline hover:text-[#1C1917]"
+                >
+                  Conditions & Garanties
+                </button>
+              </div>
             </div>
           </div>
         </div>

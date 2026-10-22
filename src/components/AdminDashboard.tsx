@@ -1972,13 +1972,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div>
                   <label className="font-semibold text-slate-700 block mb-1">
-                    Login / Identifiant du livreur (ex: LIVREUR-PAUL)
+                    Login / Identifiant du coursier
                   </label>
                   <input
                     type="text"
                     value={agentLogin}
                     onChange={(e) => setAgentLogin(e.target.value.toUpperCase())}
-                    placeholder="ex: LIVREUR-MARC ou LIVREUR-COTONOU"
+                    placeholder="LIVREUR-COTONOU"
                     required
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold focus:outline-none focus:border-slate-800"
                   />
@@ -1993,7 +1993,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="text"
                     value={agentName}
                     onChange={(e) => setAgentName(e.target.value)}
-                    placeholder="ex: Mathieu Agossa"
+                    placeholder="Nom complet"
                     required
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-medium focus:outline-none focus:border-slate-800"
                   />
@@ -2005,7 +2005,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     type="tel"
                     value={agentPhone}
                     onChange={(e) => setAgentPhone(e.target.value)}
-                    placeholder="ex: +229 01 97 00 12 34"
+                    placeholder="+229 01 97 00 12 34"
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-medium focus:outline-none focus:border-slate-800"
                   />
                 </div>
@@ -2074,7 +2074,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     value={editingProduct.name}
                     onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                     required
-                    placeholder="ex: Chronographe Automatique OrA"
+                    placeholder="Nom de l'article"
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-medium focus:outline-none focus:border-slate-800"
                   />
                 </div>
@@ -2156,7 +2156,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       type="text"
                       value={editingProduct.promoBadgeText || ''}
                       onChange={(e) => setEditingProduct({ ...editingProduct, promoBadgeText: e.target.value })}
-                      placeholder="ex: -20% Sélection"
+                      placeholder="-20% Sélection"
                       className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-bold w-28 text-right"
                     />
                   )}

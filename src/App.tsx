@@ -16,6 +16,8 @@ import { AuthModal } from './components/AuthModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { DeliveryPortal } from './components/DeliveryPortal';
 import { LiveChatWidget } from './components/LiveChatWidget';
+import { LegalModal, LegalTabKey } from './components/LegalModal';
+import { TermsConsentBanner } from './components/TermsConsentBanner';
 import { Toast } from './components/Toast';
 import { PRODUCTS } from './data/products';
 import { Product, CartItem, UserProfile, Order, SavedMobileMoney, ChatMessage, DeliveryAgent, DeliveryNotification } from './types';
@@ -81,6 +83,7 @@ export default function App() {
   const [pendingCheckoutAction, setPendingCheckoutAction] = useState<Product | 'cart' | null>(null);
   const [isClientPreviewMode, setIsClientPreviewMode] = useState(false);
   const [detailModalProduct, setDetailModalProduct] = useState<Product | null>(null);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTabKey | null>(null);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -887,6 +890,7 @@ export default function App() {
             }}
             onOrderComplete={handleOrderComplete}
             onSaveMobileMoney={handleSaveMobileMoney}
+            onOpenLegalModal={(tab) => setLegalModalTab(tab || 'cgv')}
           />
         ) : (
           <div className="space-y-1">
@@ -996,20 +1000,92 @@ export default function App() {
       {/* Toast Feedback */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
 
-      {/* Footer */}
-      <footer className="bg-[#FCFAF7] border-t border-[#ECE3D5] mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#8C7A68]">
-          <div className="flex items-center gap-2">
-            <span className="font-serif-luxury font-medium text-sm text-[#1C1917] tracking-wider">OrA</span>
-            <span>·</span>
-            <span>Montres & Parfums</span>
+      {/* Legal & Compliance Modal */}
+      <LegalModal
+        isOpen={legalModalTab !== null}
+        onClose={() => setLegalModalTab(null)}
+        initialTab={legalModalTab || 'cgv'}
+      />
+
+      {/* Floating Terms Consent Banner (Notification d'acceptation avant de démarrer) */}
+      <TermsConsentBanner
+        onOpenLegalModal={(tab) => setLegalModalTab(tab || 'cgv')}
+      />
+
+      {/* Standard Clean Luxury Footer */}
+      <footer className="bg-[#FAF7F2] border-t border-[#ECE3D5] mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            
+            {/* Brand & Location */}
+            <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
+              <div className="flex items-center gap-2">
+                <span className="font-serif-luxury font-bold text-base text-[#1C1917] tracking-wider">
+                  Maison YourOrA
+                </span>
+                <span className="text-xs text-[#8C7A68]">·</span>
+                <span className="text-xs text-[#8C7A68]">Haute Horlogerie & Parfums</span>
+              </div>
+              <p className="text-[11px] text-[#A89887]">
+                Cotonou, République du Bénin · Contact : contact@ora.bj
+              </p>
+            </div>
+
+            {/* Standard Legal Links */}
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-[#57534E]">
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('cgv')}
+                className="hover:text-[#1C1917] hover:underline transition-colors"
+              >
+                Conditions Générales de Vente
+              </button>
+              <span className="text-[#D0C0AC]">·</span>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('delivery')}
+                className="hover:text-[#1C1917] hover:underline transition-colors"
+              >
+                Livraison & Séquestre
+              </button>
+              <span className="text-[#D0C0AC]">·</span>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('returns')}
+                className="hover:text-[#1C1917] hover:underline transition-colors"
+              >
+                Retours & Remboursements
+              </button>
+              <span className="text-[#D0C0AC]">·</span>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('privacy')}
+                className="hover:text-[#1C1917] hover:underline transition-colors"
+              >
+                Confidentialité
+              </button>
+              <span className="text-[#D0C0AC]">·</span>
+              <button
+                type="button"
+                onClick={() => setLegalModalTab('legal_notice')}
+                className="hover:text-[#1C1917] hover:underline transition-colors"
+              >
+                Mentions Légales
+              </button>
+            </div>
+
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-[#A89887]">
-            <span>Session : {userProfile.name} {userProfile.isAdmin && '(👑 Admin)'}</span>
-            <span>·</span>
-            <span>Paiement sécurisé FedaPay (MTN · Moov · Celtiis)</span>
-            <span>·</span>
-            <span>© 2026 OrA</span>
+
+          {/* Sub-bar */}
+          <div className="mt-6 pt-5 border-t border-[#ECE3D5] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#A89887]">
+            <div className="flex items-center gap-2">
+              <span>Paiement sécurisé FedaPay (MTN · Moov · Celtiis)</span>
+              <span>·</span>
+              <span>TVA Bénin (5%) incluse</span>
+            </div>
+            <div>
+              <span>© 2026 YourOrA. Tous droits réservés.</span>
+            </div>
           </div>
         </div>
       </footer>

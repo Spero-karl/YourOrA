@@ -724,29 +724,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <input
-                    type="tel"
-                    value={loginPhone}
-                    onChange={(e) => handlePhoneChange(e.target.value, setLoginPhone)}
-                    placeholder="ex: 01 97 00 12 34"
-                    autoComplete="off"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-stone-700 block">
-                    Adresse email
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(normalizeStrictPrefixes(e.target.value))}
-                    placeholder="ex: contact@exemple.com"
-                    autoComplete="off"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
-                  />
+                    <input
+                      type="tel"
+                      value={loginPhone}
+                      onChange={(e) => handlePhoneChange(e.target.value, setLoginPhone)}
+                      placeholder="01 97 00 12 34"
+                      autoComplete="off"
+                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-stone-700 block">
+                      Adresse email
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(normalizeStrictPrefixes(e.target.value))}
+                      placeholder="adresse@domaine.com"
+                      autoComplete="off"
+                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
+                    />
                 </div>
               )}
 
@@ -845,7 +845,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="text"
                   value={registerName}
                   onChange={(e) => setRegisterName(e.target.value)}
-                  placeholder="ex: Mathieu Agossa"
+                  placeholder="Nom complet"
                   autoComplete="off"
                   required
                   className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
@@ -896,7 +896,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="tel"
                       value={registerPhone}
                       onChange={(e) => handlePhoneChange(e.target.value, setRegisterPhone)}
-                      placeholder="ex: 01 97 00 12 34"
+                      placeholder="01 97 00 12 34"
                       autoComplete="off"
                       required
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:bg-white focus:border-stone-900"
@@ -909,7 +909,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="email"
                       value={registerEmail}
                       onChange={(e) => setRegisterEmail(e.target.value)}
-                      placeholder="ex: contact@exemple.com"
+                      placeholder="adresse@domaine.com"
                       autoComplete="off"
                       required
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 focus:outline-none focus:bg-white focus:border-stone-900"
@@ -946,7 +946,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="text"
                     value={registerAddress}
                     onChange={(e) => setRegisterAddress(e.target.value)}
-                    placeholder="ex: Haie Vive"
+                    placeholder="Quartier de résidence"
                     className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium text-stone-900 focus:outline-none focus:border-stone-900"
                   />
                 </div>
@@ -1085,7 +1085,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="text"
                       value={resetIdentifier}
                       onChange={(e) => setResetIdentifier(normalizeStrictPrefixes(e.target.value))}
-                      placeholder="ex: 01 97 00 12 34 ou contact@ora.bj"
+                      placeholder="01 97 00 12 34 ou email de contact"
                       autoComplete="off"
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
                     />
@@ -1159,7 +1159,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       maxLength={6}
                       value={resetOtpCode}
                       onChange={(e) => setResetOtpCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="ex: 123456"
+                      placeholder="Code à 6 chiffres"
                       autoComplete="off"
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-center font-mono text-lg font-bold tracking-widest text-stone-900 focus:outline-none focus:bg-white focus:border-stone-900 transition-all"
                     />

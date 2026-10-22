@@ -161,6 +161,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <span>Commander</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#8C7A68]">
+                <span>🛡️</span>
+                <span>Paiement sous séquestre · Remise sur code secret</span>
+              </div>
             </div>
           )}
         </aside>
